@@ -20,5 +20,5 @@ func main() {
 
 	fmt.Println(user.Layout.StringWithCosts())
 
-	Optimize(quartadInfo, user.Layout, user, true, 1, 3)
+	Optimize(quartadInfo, user.Layout, user, false, 1, 3)
 }

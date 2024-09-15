@@ -41,6 +41,10 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, top
 
 	start, end := sa.GetSimulationRange()
 	for i := start; i < end; i++ {
+		if i%500 == 0 {
+			fmt.Println(acceptedLayout.String())
+		}
+
 		// Create a new layout by shuffling the accepted layout
 		currLayout := acceptedLayout.Duplicate()
 		currLayout.Shuffle(rand.Intn(numSwaps) + 1)
