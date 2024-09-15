@@ -36,6 +36,7 @@ type Key struct {
 	FreeToPlaceShifted   bool
 	AssociatedFinger     Finger
 	Cost                 float64
+	Swappable            bool
 }
 
 type KeyPhysicalInfo struct {
@@ -78,11 +79,11 @@ func ReadLayout(user User) (Layout, error) {
 	essentialRunes := make(map[rune]bool)
 
 	// Process Rows
-	layout.NumberOfKeys, layout.FreeToPlaceRunes, err = layout.Left.ProcessRows(&essentialRunes)
+	layout.NumberOfKeys, layout.FreeToPlaceRunes, err = layout.Left.ProcessRows(&essentialRunes, layout.SupportsOverrides, user.Locale)
 	if err != nil {
 		return layout, err
 	}
-	keyCount, freeToPlaceRunes, err := layout.Right.ProcessRows(&essentialRunes)
+	keyCount, freeToPlaceRunes, err := layout.Right.ProcessRows(&essentialRunes, layout.SupportsOverrides, user.Locale)
 	if err != nil {
 		return layout, err
 	}
@@ -101,14 +102,14 @@ func ReadLayout(user User) (Layout, error) {
 	return layout, nil
 }
 
-func (s *Side) ProcessRows(essentialRunes *map[rune]bool) (int, int, error) {
+func (s *Side) ProcessRows(essentialRunes *map[rune]bool, supportOverrides bool, locale Locale) (int, int, error) {
 	keyCount := 0
 	freeToPlaceRunes := 0
 	s.Rows = make([][]Key, len(s.RawRows))
 	for i, row := range s.RawRows {
 		keyRow := make([]Key, len(row))
 		for j, keyStr := range row {
-			key, err := parseKeyString(keyStr, essentialRunes)
+			key, err := parseKeyString(keyStr, essentialRunes, supportOverrides, locale)
 			if err != nil {
 				return 0, 0, fmt.Errorf("error parsing key at row %d, col %d: %v", i, j, err)
 			}
@@ -126,7 +127,7 @@ func (s *Side) ProcessRows(essentialRunes *map[rune]bool) (int, int, error) {
 	return keyCount, freeToPlaceRunes, nil
 }
 
-func parseKeyString(keyStr string, essentialRunes *map[rune]bool) (Key, error) {
+func parseKeyString(keyStr string, essentialRunes *map[rune]bool, supportOverrides bool, locale Locale) (Key, error) {
 	if len(keyStr) < 2 {
 		return Key{}, fmt.Errorf("invalid key string: %s", keyStr)
 	}
@@ -140,6 +141,7 @@ func parseKeyString(keyStr string, essentialRunes *map[rune]bool) (Key, error) {
 		FreeToPlaceUnshifted: true,
 		FreeToPlaceShifted:   true,
 		AssociatedFinger:     finger,
+		Swappable:            false,
 	}
 
 	keyContent := keyStr[:len(keyStr)-1]
@@ -149,7 +151,8 @@ func parseKeyString(keyStr string, essentialRunes *map[rune]bool) (Key, error) {
 		// Free to place on both layers
 		key.FreeToPlaceUnshifted = true
 		key.FreeToPlaceShifted = true
-	case "\n", "\t", "\b":
+		key.Swappable = true
+	case "\n", "\t", "\b", " ":
 		// Control characters
 		key.MustUseUnshiftedRune = runeFromString(keyContent)
 		(*essentialRunes)[key.MustUseUnshiftedRune] = true
@@ -162,6 +165,12 @@ func parseKeyString(keyStr string, essentialRunes *map[rune]bool) (Key, error) {
 			(*essentialRunes)[key.MustUseUnshiftedRune] = true
 			key.FreeToPlaceUnshifted = false
 			key.FreeToPlaceShifted = true
+			if !supportOverrides {
+				shiftedRune := locale.unshiftedToShifted[key.MustUseUnshiftedRune]
+				key.MustUseShiftedRune = shiftedRune
+				(*essentialRunes)[key.MustUseShiftedRune] = true
+				key.FreeToPlaceShifted = false
+			}
 		} else if len(keyContent) == 1 && unicode.IsLetter(rune(keyContent[0])) {
 			// Alphabetic letters
 			lowerRune := unicode.ToLower(rune(keyContent[0]))
@@ -301,8 +310,31 @@ func (layout *Layout) mapRunesToPhysicalKeyInfo() map[rune]*KeyPhysicalInfo {
 	return keyMap
 }
 
-// DeepCopyLayout creates an efficient deep copy of the given Layout
-func DeepCopyLayout(layout Layout) Layout {
+func (layout *Layout) GetSwappableKeys() []*Key {
+	var keys []*Key
+	for r, _ := range layout.Left.Rows {
+		for c, key := range layout.Left.Rows[r] {
+			if key.Swappable {
+				keys = append(keys, &layout.Left.Rows[r][c])
+			}
+		}
+	}
+	for r, _ := range layout.Right.Rows {
+		for c, key := range layout.Right.Rows[r] {
+			if key.Swappable {
+				keys = append(keys, &layout.Right.Rows[r][c])
+			}
+		}
+	}
+	return keys
+}
+
+func (layout *Layout) Duplicate() Layout {
+	return deepCopyLayout(*layout)
+}
+
+// deepCopyLayout creates an efficient deep copy of the given Layout
+func deepCopyLayout(layout Layout) Layout {
 	copiedLayout := Layout{
 		Name:              layout.Name,
 		SupportsOverrides: layout.SupportsOverrides,
@@ -391,26 +423,14 @@ func (layout *Layout) stringInternal(costs bool) string {
 
 func visualizeRow(row []Key, costs bool) string {
 	var keys []string
-	var specialCharMap = map[rune]rune{
-		'\t': '⇥', // Tab
-		'\b': '⌫', // Backspace
-		'\r': '↵', // Return
-		'\n': '↵', // Newline (often the same as Return)
-		' ':  '␣', // Space
-		// Add more special characters as needed
-	}
-	unassignedKeySymbol := rune('☒')
 
 	if !costs {
 		for _, key := range row {
 			if key.MustUseUnshiftedRune != 0 {
-				displayRune := key.MustUseUnshiftedRune
-				if mappedRune, ok := specialCharMap[displayRune]; ok {
-					displayRune = mappedRune
-				}
+				displayRune := RuneDisplayVersion(key.MustUseUnshiftedRune)
 				keys = append(keys, fmt.Sprintf("[%c]", displayRune))
 			} else {
-				keys = append(keys, fmt.Sprintf("[%c]", unassignedKeySymbol))
+				keys = append(keys, fmt.Sprintf("[%c]", RuneDisplayVersion(rune(0))))
 			}
 		}
 	} else {

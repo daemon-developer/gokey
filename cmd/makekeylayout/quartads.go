@@ -9,9 +9,9 @@ import (
 type QuartadList map[string]int
 
 type QuartadInfo struct {
-	Quartads    QuartadList
-	ValidRunes  []rune
-	UnusedRunes []rune
+	Quartads            QuartadList
+	RunesToPlace        []rune
+	RunesNotBeingPlaced []rune
 }
 
 func isTypeableRune(r rune) bool {
@@ -31,6 +31,7 @@ func isValidRune(r rune, validRunes map[rune]int) bool {
 
 func PrepareQuartadList(s string, layout Layout) QuartadInfo {
 	foundRunes := make(map[rune]int)
+	runesNeedingPlacing := make(map[rune]int)
 	quartads := make(QuartadList)
 	runes := []rune(s)
 	n := len(runes)
@@ -63,7 +64,7 @@ func PrepareQuartadList(s string, layout Layout) QuartadInfo {
 	// Get the sorted list of runes by frequency
 	sortedRunes := sortMapByValueDesc(foundRunes)
 
-	// Add the top frequent runes to ValidRunes, excluding essential runes already added
+	// Add the top frequent runes to RunesToPlace, excluding essential runes already added
 	i := 0
 	numAdded := 0
 	for numAdded < numFrequentRunes && i < len(sortedRunes) {
@@ -75,7 +76,7 @@ func PrepareQuartadList(s string, layout Layout) QuartadInfo {
 		i++
 	}
 
-	// Collect invalid runes (runes that are typeable but not in ValidRunes)
+	// Collect invalid runes (runes that are typeable but not in RunesToPlace)
 	invalidRunes := make(map[rune]int)
 	for i < len(sortedRunes) {
 		r := sortedRunes[i].Key
@@ -108,10 +109,17 @@ func PrepareQuartadList(s string, layout Layout) QuartadInfo {
 		}
 	}
 
-	orderValidRunes := sortMapByValueDescToArray(validRunes)
+	for r, v := range validRunes {
+		runesNeedingPlacing[r] = v
+	}
+	for _, r := range layout.EssentialRunes {
+		delete(runesNeedingPlacing, r)
+	}
+
+	orderedRunesNeedingPlacing := sortMapByValueDescToArray(runesNeedingPlacing)
 	orderedInvalidRunes := sortMapByValueDescToArray(invalidRunes)
 
-	return QuartadInfo{quartads, orderValidRunes, orderedInvalidRunes}
+	return QuartadInfo{quartads, orderedRunesNeedingPlacing, orderedInvalidRunes}
 }
 
 func GetQuartadList(referenceTextFile string, layout Layout) (QuartadInfo, error) {
@@ -126,8 +134,8 @@ func GetQuartadList(referenceTextFile string, layout Layout) (QuartadInfo, error
 
 	// Process the text
 	quartadInfo := PrepareQuartadList(text, layout)
-	fmt.Printf("Using %d unique runes\n", len(quartadInfo.ValidRunes))
-	fmt.Printf("%d unused runes\n", len(quartadInfo.UnusedRunes))
+	fmt.Printf("Using %d unique runes\n", len(quartadInfo.RunesToPlace))
+	fmt.Printf("%d unused runes\n", len(quartadInfo.RunesNotBeingPlaced))
 
 	// Sort and display top 50 quartads
 	sortedQuartads := sortMapByValueDesc(quartadInfo.Quartads)

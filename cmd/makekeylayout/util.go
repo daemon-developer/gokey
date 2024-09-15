@@ -36,3 +36,21 @@ func sortMapByValueDescToArray[K cmp.Ordered, V cmp.Ordered](m map[K]V) []K {
 	}
 	return keys
 }
+
+func RuneDisplayVersion(r rune) rune {
+	var specialCharMap = map[rune]rune{
+		'\t':    '⇥', // Tab
+		'\b':    '⌫', // Backspace
+		'\r':    '↵', // Return
+		'\n':    '↵', // Newline (often the same as Return)
+		' ':     '␣', // Space
+		rune(0): '☒', // Unassigned
+		// Add more special characters as needed
+	}
+
+	if mappedRune, ok := specialCharMap[r]; ok {
+		return mappedRune
+	}
+
+	return r
+}
