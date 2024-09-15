@@ -15,8 +15,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%d unique runes\n", len(quartadInfo.RunesToPlace))
-	fmt.Printf("%d unused runes\n", len(quartadInfo.RunesNotBeingPlaced))
+	fmt.Printf("%d runes on keyboard\n", len(quartadInfo.RunesOnKeyboard))
 	fmt.Printf("%d quartads\n", len(quartadInfo.Quartads))
 
 	fmt.Println(user.Layout.StringWithCosts())

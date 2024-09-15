@@ -9,9 +9,8 @@ import (
 type QuartadList map[string]int
 
 type QuartadInfo struct {
-	Quartads            QuartadList
-	RunesToPlace        []rune
-	RunesNotBeingPlaced []rune
+	Quartads        QuartadList
+	RunesOnKeyboard []rune
 }
 
 func isTypeableRune(r rune) bool {
@@ -32,7 +31,6 @@ func isValidRune(r rune, validRunes map[rune]int) bool {
 func PrepareQuartadList(s string, user User) QuartadInfo {
 	layout := user.Layout
 	foundRunes := make(map[rune]int)
-	runesNeedingPlacing := make(map[rune]int)
 	quartads := make(QuartadList)
 	runes := []rune(s)
 	n := len(runes)
@@ -44,55 +42,21 @@ func PrepareQuartadList(s string, user User) QuartadInfo {
 		}
 	}
 
-	// Create a map to hold valid runes
-	validRunes := make(map[rune]int)
-
 	// Ensure essential runes are included
 	for _, r := range layout.EssentialRunes {
-		validRunes[r] = foundRunes[r]
+		foundRunes[r] = foundRunes[r]
 	}
 
 	// The essential from the layout are essential meet the needs of hardcoded
 	// keys on that layout. We now also need to add any the user has asked for
 	reqRunes := []rune(user.Required)
 	for _, r := range reqRunes {
-		validRunes[r] = foundRunes[r]
+		foundRunes[r] = foundRunes[r]
 	}
 
-	// Determine how many runes we can select from the top frequent runes
-	availableRunes := layout.NumberOfKeys * 2
-	numEssentialRunes := len(layout.EssentialRunes)
-	numFrequentRunes := availableRunes - numEssentialRunes
-
-	if numFrequentRunes < 0 {
-		fmt.Println("Error: Number of essential runes exceeds available keys.")
-		numFrequentRunes = 0
-	}
-
-	// Get the sorted list of runes by frequency
-	sortedRunes := sortMapByValueDesc(foundRunes)
-
-	// Add the top frequent runes to RunesToPlace, excluding essential runes already added
-	i := 0
-	numAdded := 0
-	for numAdded < numFrequentRunes && i < len(sortedRunes) {
-		r := sortedRunes[i].Key
-		if _, isEssential := validRunes[r]; !isEssential {
-			validRunes[r] = sortedRunes[i].Value
-			numAdded++
-		}
-		i++
-	}
-
-	// Collect invalid runes (runes that are typeable but not in RunesToPlace)
-	invalidRunes := make(map[rune]int)
-	for i < len(sortedRunes) {
-		r := sortedRunes[i].Key
-		if _, isEssential := validRunes[r]; !isEssential {
-			invalidRunes[r] = sortedRunes[i].Value
-		}
-		i++
-	}
+	// Map runes onto the keyboard in usage order (with essential first) so
+	// we can build quartads with what we know are on the keyboard
+	validRunes := layout.AssignRunesToKeys(foundRunes, user)
 
 	for j := 0; j < len(runes); j++ {
 		if isValidRune(runes[j], validRunes) {
@@ -117,17 +81,14 @@ func PrepareQuartadList(s string, user User) QuartadInfo {
 		}
 	}
 
-	for r, v := range validRunes {
-		runesNeedingPlacing[r] = v
-	}
-	for _, r := range layout.EssentialRunes {
-		delete(runesNeedingPlacing, r)
+	runesOnKeyboard := make([]rune, len(validRunes))
+	i := 0
+	for _, r := range validRunes {
+		runesOnKeyboard[i] = rune(r)
+		i++
 	}
 
-	orderedRunesNeedingPlacing := sortMapByValueDescToArray(runesNeedingPlacing)
-	orderedInvalidRunes := sortMapByValueDescToArray(invalidRunes)
-
-	return QuartadInfo{quartads, orderedRunesNeedingPlacing, orderedInvalidRunes}
+	return QuartadInfo{quartads, runesOnKeyboard}
 }
 
 func GetQuartadList(referenceTextFile string, user User) (QuartadInfo, error) {
@@ -142,8 +103,7 @@ func GetQuartadList(referenceTextFile string, user User) (QuartadInfo, error) {
 
 	// Process the text
 	quartadInfo := PrepareQuartadList(text, user)
-	fmt.Printf("Using %d unique runes\n", len(quartadInfo.RunesToPlace))
-	fmt.Printf("%d unused runes\n", len(quartadInfo.RunesNotBeingPlaced))
+	fmt.Printf("Using %d unique runes\n", len(quartadInfo.RunesOnKeyboard))
 
 	// Sort and display top 50 quartads
 	sortedQuartads := sortMapByValueDesc(quartadInfo.Quartads)

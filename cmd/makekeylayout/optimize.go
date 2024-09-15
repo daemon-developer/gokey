@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
-	"unicode"
 )
 
 type BestLayoutEntry struct {
@@ -13,8 +12,7 @@ type BestLayoutEntry struct {
 }
 
 func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, topLayouts int, numSwaps int) {
-	initLayout := CreateInitialLayout(quartadInfo, layout, user)
-	runesToKeyPhysicalKeyInfoMap := initLayout.mapRunesToPhysicalKeyInfo()
+	initLayout := layout.Duplicate()
 	penaltyRules := InitPenaltyRules(user)
 
 	if debug {
@@ -22,6 +20,7 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, top
 		fmt.Print(initLayout.String())
 	}
 
+	runesToKeyPhysicalKeyInfoMap := initLayout.mapRunesToPhysicalKeyInfo()
 	initialPenalty, initialResults := CalculatePenalty(quartadInfo.Quartads, initLayout, runesToKeyPhysicalKeyInfoMap, penaltyRules, true)
 	if debug {
 		fmt.Printf("Initial layout penalty: %f\n", initialPenalty)
@@ -118,133 +117,4 @@ func swapKeys(a, b *Key) {
 	a.FreeToPlaceUnshifted, b.FreeToPlaceUnshifted = b.FreeToPlaceUnshifted, a.FreeToPlaceUnshifted
 	a.MustUseShiftedRune, b.MustUseShiftedRune = b.MustUseShiftedRune, a.MustUseShiftedRune
 	a.FreeToPlaceShifted, b.FreeToPlaceShifted = b.FreeToPlaceShifted, a.FreeToPlaceShifted
-}
-
-func CreateInitialLayout(quartadInfo QuartadInfo, layout Layout, user User) Layout {
-	l := layout.Duplicate()
-	assignRunesToKeys(l, quartadInfo.RunesToPlace, user)
-	return l
-}
-
-func assignRunesToKeys(layout Layout, validRunes []rune, user User) {
-	orderedKeyInfos := getOrderedKeysByCost(layout)
-	var i int
-
-	alreadyAssigned := make(map[rune]bool)
-
-	for _, keyInfo := range orderedKeyInfos {
-		if i >= len(validRunes) {
-			break
-		}
-
-		// Get the rune to assign
-		runeToAssign := validRunes[i]
-
-		// Check if it's already assigned
-		if alreadyAssigned[runeToAssign] {
-			i++
-			continue
-		}
-
-		if unicode.IsLetter(runeToAssign) {
-			if keyInfo.key.FreeToPlaceUnshifted == false {
-				continue
-			}
-			lowerAlpha := unicode.ToLower(runeToAssign)
-			if alreadyAssigned[lowerAlpha] == false {
-				// If it's a letter, assign lower and upper case
-				keyInfo.key.MustUseUnshiftedRune = lowerAlpha
-				keyInfo.key.MustUseShiftedRune = unicode.ToUpper(runeToAssign)
-				keyInfo.key.FreeToPlaceUnshifted = false
-				keyInfo.key.FreeToPlaceShifted = false
-				alreadyAssigned[lowerAlpha] = true
-			}
-		} else {
-			// Handle symbol assignment
-			if layout.SupportsOverrides {
-				if keyInfo.key.FreeToPlaceUnshifted {
-					keyInfo.key.MustUseUnshiftedRune = runeToAssign
-					keyInfo.key.FreeToPlaceUnshifted = false
-					alreadyAssigned[runeToAssign] = true
-				} else {
-					keyInfo.key.MustUseShiftedRune = runeToAssign
-					keyInfo.key.FreeToPlaceShifted = false
-					alreadyAssigned[runeToAssign] = true
-				}
-			} else {
-				if keyInfo.key.FreeToPlaceUnshifted == false {
-					continue
-				}
-				// Use locale-based symbol mapping if overrides aren't supported
-				if shiftedRune, exists := user.Locale.unshiftedToShifted[runeToAssign]; exists {
-					keyInfo.key.MustUseUnshiftedRune = runeToAssign
-					keyInfo.key.MustUseShiftedRune = shiftedRune
-					keyInfo.key.FreeToPlaceUnshifted = false
-					keyInfo.key.FreeToPlaceShifted = false
-					alreadyAssigned[runeToAssign] = true
-					alreadyAssigned[shiftedRune] = true
-				} else if unshiftedRune, exists := user.Locale.shiftedToUnshifted[runeToAssign]; exists {
-					skip := false
-					for _, r := range user.Required {
-						if unshiftedRune == r {
-							// Already handled
-							skip = true
-							break
-						}
-					}
-					if !skip {
-						for _, r := range layout.EssentialRunes {
-							if unshiftedRune == r {
-								// Already handled
-								skip = true
-								break
-							}
-						}
-					}
-					if skip {
-						i++
-						continue
-					}
-					keyInfo.key.MustUseUnshiftedRune = unshiftedRune
-					keyInfo.key.MustUseShiftedRune = runeToAssign
-					keyInfo.key.FreeToPlaceUnshifted = false
-					keyInfo.key.FreeToPlaceShifted = false
-					alreadyAssigned[runeToAssign] = true
-					alreadyAssigned[unshiftedRune] = true
-				} else {
-					// Not actually symbols so will be things like ENTER or backspace
-					keyInfo.key.MustUseUnshiftedRune = runeToAssign
-					keyInfo.key.MustUseShiftedRune = runeToAssign
-					keyInfo.key.FreeToPlaceUnshifted = false
-					keyInfo.key.FreeToPlaceShifted = false
-					alreadyAssigned[runeToAssign] = true
-				}
-			}
-		}
-
-		fmt.Printf("Assigned '%c' to a key\n", runeToAssign)
-
-		i++
-	}
-}
-
-func getOrderedKeysByCost(layout Layout) []*KeyPhysicalInfo {
-	var keyInfos []*KeyPhysicalInfo
-
-	for r := range layout.Left.Rows {
-		for c := range layout.Left.Rows[r] {
-			keyInfos = append(keyInfos, &layout.Left.Rows[r][c])
-		}
-	}
-	for r := range layout.Right.Rows {
-		for c := range layout.Right.Rows[r] {
-			keyInfos = append(keyInfos, &layout.Right.Rows[r][c])
-		}
-	}
-
-	sort.Slice(keyInfos, func(i, j int) bool {
-		return keyInfos[i].cost < keyInfos[j].cost
-	})
-
-	return keyInfos
 }

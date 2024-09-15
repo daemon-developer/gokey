@@ -64,18 +64,18 @@ func ReadUser(filename string) (User, error) {
 	// Get the required runes
 	profile.Required = []rune(profile.RawRequired)
 
+	// Now read their locale
+	profile.Locale, err = LoadUserLocale(profile.RawLocale)
+	if err != nil {
+		return User{}, err
+	}
+
 	// Now read their layout
 	layout, err := ReadLayout(profile)
 	if err != nil {
 		return User{}, err
 	}
 	profile.Layout = layout
-
-	// Now read their locale
-	profile.Locale, err = LoadUserLocale(profile.RawLocale)
-	if err != nil {
-		return User{}, err
-	}
 
 	return profile, nil
 }
