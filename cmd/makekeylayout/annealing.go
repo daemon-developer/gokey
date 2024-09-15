@@ -20,7 +20,7 @@ func NewSimulatedAnnealing() *SimulatedAnnealing {
 		T0: 1.5,
 		K:  10.0,
 		P0: 1.0,
-		N:  1000, //15000,
+		N:  500, //15000,
 	}
 	sa.KN = sa.K / float64(sa.N)
 	return sa

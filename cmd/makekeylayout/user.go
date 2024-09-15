@@ -22,25 +22,28 @@ type Hand struct {
 }
 
 type User struct {
-	Name      string `json:"name"`
-	Keyboard  string `json:"keyboard"`
-	RawLocale string `json:"locale"`
-	Locale    Locale
-	Left      Hand `json:"left"`
-	Right     Hand `json:"right"`
-	Penalties struct {
-		SameFinger          float64 `json:"same_finger"`
-		LongJumpHand        float64 `json:"long_jump_hand"`
-		LongJump            float64 `json:"long_jump"`
-		LongJumpConsecutive float64 `json:"long_jump_consecutive"`
-		PinkyRingTwist      float64 `json:"pinky_ring_twist"`
-		RollReversal        float64 `json:"roll_reversal"`
-		SameHand            float64 `json:"same_hand"`
-		AlternatingHand     float64 `json:"alternating_hand"`
-		RollOut             float64 `json:"roll_out"`
-		RollIn              float64 `json:"roll_in"`
-		LongJumpSandwich    float64 `json:"long_jump_sandwich"`
-		Twist               float64 `json:"twist"`
+	Name        string `json:"name"`
+	Keyboard    string `json:"keyboard"`
+	RawLocale   string `json:"locale"`
+	RawRequired string `json:"required"`
+	Required    []rune
+	Locale      Locale
+	Layout      Layout
+	Left        Hand `json:"left"`
+	Right       Hand `json:"right"`
+	Penalties   struct {
+		SFB                  float64 `json:"sfb"`
+		VerticalFingerTravel float64 `json:"vertical_finger_travel"`
+		LongSFB              float64 `json:"long_sfb"`
+		LateralStretch       float64 `json:"lateral_stretch"`
+		PinkyRingStretch     float64 `json:"pinky_ring_stretch"`
+		RollReversal         float64 `json:"roll_reversal"`
+		HandRepetition       float64 `json:"hand_repetition"`
+		HandAlternation      float64 `json:"hand_alternation"`
+		OutwardRoll          float64 `json:"outward_roll"`
+		InwardRoll           float64 `json:"inward_roll"`
+		ScissorMotion        float64 `json:"scissor_motion"`
+		RowChangeInRoll      float64 `json:"row_change_in_roll"`
 	} `json:"penalties"`
 }
 
@@ -57,6 +60,16 @@ func ReadUser(filename string) (User, error) {
 	if err != nil {
 		return User{}, fmt.Errorf("error parsing JSON: %w", err)
 	}
+
+	// Get the required runes
+	profile.Required = []rune(profile.RawRequired)
+
+	// Now read their layout
+	layout, err := ReadLayout(profile)
+	if err != nil {
+		return User{}, err
+	}
+	profile.Layout = layout
 
 	// Now read their locale
 	profile.Locale, err = LoadUserLocale(profile.RawLocale)

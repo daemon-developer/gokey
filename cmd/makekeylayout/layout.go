@@ -34,26 +34,28 @@ type Key struct {
 	MustUseShiftedRune   rune
 	FreeToPlaceUnshifted bool
 	FreeToPlaceShifted   bool
-	AssociatedFinger     Finger
-	Cost                 float64
-	Swappable            bool
 }
 
 type KeyPhysicalInfo struct {
-	key  *Key
-	side *Side
-	row  int
-	col  int
+	key              *Key
+	swappable        bool
+	side             *Side
+	associatedFinger Finger
+	cost             float64
+	row              int
+	col              int
+	horzDeltaToHome  int
+	vertDeltaToHome  int
 }
 
 type Side struct {
-	RawRows    [][]string   `json:"rows"`
-	Rows       [][]Key      // Populated after processing RawRows
-	ThumbHome  HomePosition `json:"thumb_home"`
-	IndexHome  HomePosition `json:"index_home"`
-	MiddleHome HomePosition `json:"middle_home"`
-	RingHome   HomePosition `json:"ring_home"`
-	PinkieHome HomePosition `json:"pinkie_home"`
+	RawRows    [][]string          `json:"rows"`
+	Rows       [][]KeyPhysicalInfo // Populated after processing RawRows
+	ThumbHome  HomePosition        `json:"thumb_home"`
+	IndexHome  HomePosition        `json:"index_home"`
+	MiddleHome HomePosition        `json:"middle_home"`
+	RingHome   HomePosition        `json:"ring_home"`
+	PinkieHome HomePosition        `json:"pinkie_home"`
 }
 
 type HomePosition struct {
@@ -79,11 +81,11 @@ func ReadLayout(user User) (Layout, error) {
 	essentialRunes := make(map[rune]bool)
 
 	// Process Rows
-	layout.NumberOfKeys, layout.FreeToPlaceRunes, err = layout.Left.ProcessRows(&essentialRunes, layout.SupportsOverrides, user.Locale)
+	layout.NumberOfKeys, layout.FreeToPlaceRunes, err = layout.ProcessRows(&layout.Left, &essentialRunes, layout.SupportsOverrides, user.Locale)
 	if err != nil {
 		return layout, err
 	}
-	keyCount, freeToPlaceRunes, err := layout.Right.ProcessRows(&essentialRunes, layout.SupportsOverrides, user.Locale)
+	keyCount, freeToPlaceRunes, err := layout.ProcessRows(&layout.Right, &essentialRunes, layout.SupportsOverrides, user.Locale)
 	if err != nil {
 		return layout, err
 	}
@@ -96,52 +98,62 @@ func ReadLayout(user User) (Layout, error) {
 	}
 
 	// Process the costs
-	ProcessCosts(&layout.Left, user.Left)
-	ProcessCosts(&layout.Right, user.Right)
+	layout.ProcessCosts(&layout.Left, user.Left)
+	layout.ProcessCosts(&layout.Right, user.Right)
 
 	return layout, nil
 }
 
-func (s *Side) ProcessRows(essentialRunes *map[rune]bool, supportOverrides bool, locale Locale) (int, int, error) {
+func (layout *Layout) ProcessRows(s *Side, essentialRunes *map[rune]bool, supportOverrides bool, locale Locale) (int, int, error) {
 	keyCount := 0
 	freeToPlaceRunes := 0
-	s.Rows = make([][]Key, len(s.RawRows))
-	for i, row := range s.RawRows {
-		keyRow := make([]Key, len(row))
-		for j, keyStr := range row {
-			key, err := parseKeyString(keyStr, essentialRunes, supportOverrides, locale)
+	s.Rows = make([][]KeyPhysicalInfo, len(s.RawRows))
+	for r, row := range s.RawRows {
+		keyRow := make([]KeyPhysicalInfo, len(row))
+		for c, keyStr := range row {
+			keyInfo, err := layout.parseKeyString(s, r, c, keyStr, essentialRunes, supportOverrides, locale)
 			if err != nil {
-				return 0, 0, fmt.Errorf("error parsing key at row %d, col %d: %v", i, j, err)
+				return 0, 0, fmt.Errorf("error parsing keyInfo at row %d, col %d: %v", r, c, err)
 			}
-			keyRow[j] = key
-			if key.FreeToPlaceUnshifted {
+			keyRow[c] = keyInfo
+			if keyInfo.key.FreeToPlaceUnshifted {
 				freeToPlaceRunes++
 			}
-			if key.FreeToPlaceShifted {
+			if keyInfo.key.FreeToPlaceShifted {
 				freeToPlaceRunes++
 			}
 		}
-		s.Rows[i] = keyRow
+		s.Rows[r] = keyRow
 		keyCount += len(keyRow)
 	}
 	return keyCount, freeToPlaceRunes, nil
 }
 
-func parseKeyString(keyStr string, essentialRunes *map[rune]bool, supportOverrides bool, locale Locale) (Key, error) {
+func (layout *Layout) parseKeyString(s *Side, r, c int, keyStr string, essentialRunes *map[rune]bool, supportOverrides bool, locale Locale) (KeyPhysicalInfo, error) {
 	if len(keyStr) < 2 {
-		return Key{}, fmt.Errorf("invalid key string: %s", keyStr)
+		return KeyPhysicalInfo{}, fmt.Errorf("invalid key string: %s", keyStr)
 	}
 
 	finger, err := parseFinger(keyStr[len(keyStr)-1])
 	if err != nil {
-		return Key{}, err
+		return KeyPhysicalInfo{}, err
 	}
 
 	key := Key{
 		FreeToPlaceUnshifted: true,
 		FreeToPlaceShifted:   true,
-		AssociatedFinger:     finger,
-		Swappable:            false,
+	}
+
+	keyInfo := KeyPhysicalInfo{
+		key:              &key,
+		swappable:        false,
+		side:             s,
+		associatedFinger: finger,
+		cost:             0,
+		row:              r,
+		col:              c,
+		horzDeltaToHome:  0,
+		vertDeltaToHome:  0,
 	}
 
 	keyContent := keyStr[:len(keyStr)-1]
@@ -151,7 +163,7 @@ func parseKeyString(keyStr string, essentialRunes *map[rune]bool, supportOverrid
 		// Free to place on both layers
 		key.FreeToPlaceUnshifted = true
 		key.FreeToPlaceShifted = true
-		key.Swappable = true
+		keyInfo.swappable = true
 	case "\n", "\t", "\b", " ":
 		// Control characters
 		key.MustUseUnshiftedRune = runeFromString(keyContent)
@@ -190,7 +202,7 @@ func parseKeyString(keyStr string, essentialRunes *map[rune]bool, supportOverrid
 		}
 	}
 
-	return key, nil
+	return keyInfo, nil
 }
 
 func runeFromString(s string) rune {
@@ -224,20 +236,21 @@ func parseFinger(fingerChar byte) (Finger, error) {
 	}
 }
 
-func ProcessCosts(side *Side, hand Hand) {
+func (layout *Layout) ProcessCosts(side *Side, hand Hand) {
 	for r := 0; r < len(side.Rows); r++ {
 		for c := 0; c < len(side.Rows[r]); c++ {
-			side.Rows[r][c].Cost = calculateFingerCost(r, c, hand, *side)
+			keyInfo := &side.Rows[r][c]
+			keyInfo.cost, keyInfo.vertDeltaToHome, keyInfo.horzDeltaToHome = calculateFingerCost(r, c, hand, *side)
 		}
 	}
 }
 
-func calculateFingerCost(row, col int, hand Hand, side Side) float64 {
+func calculateFingerCost(row, col int, hand Hand, side Side) (float64, int, int) {
 	key := side.Rows[row][col]
-	homePosition := getFingerHomePosition(key.AssociatedFinger, side)
+	homePosition := getFingerHomePosition(key.associatedFinger, side)
 	deltaRow := row - homePosition.Row
 	deltaCol := col - homePosition.Col
-	fingerCosts := getFingerCost(key.AssociatedFinger, hand)
+	fingerCosts := getFingerCost(key.associatedFinger, hand)
 	baseCost := fingerCosts.Cost
 	baseCost += math.Abs(float64(deltaCol)) * fingerCosts.HCost
 	if deltaRow < 0 {
@@ -245,7 +258,7 @@ func calculateFingerCost(row, col int, hand Hand, side Side) float64 {
 	} else if deltaRow > 0 {
 		baseCost += math.Abs(float64(deltaRow)) * fingerCosts.DownCost
 	}
-	return baseCost
+	return baseCost, deltaRow, deltaCol
 }
 
 func getFingerHomePosition(finger Finger, side Side) HomePosition {
@@ -285,24 +298,24 @@ func getFingerCost(finger Finger, hand Hand) FingerCost {
 func (layout *Layout) mapRunesToPhysicalKeyInfo() map[rune]*KeyPhysicalInfo {
 	keyMap := make(map[rune]*KeyPhysicalInfo)
 
-	for r, _ := range layout.Left.Rows {
-		for c, key := range layout.Left.Rows[r] {
-			if !key.FreeToPlaceUnshifted {
-				keyMap[key.MustUseUnshiftedRune] = &KeyPhysicalInfo{key: &layout.Left.Rows[r][c], side: &layout.Left, row: r, col: c}
+	for r := range layout.Left.Rows {
+		for c, keyInfo := range layout.Left.Rows[r] {
+			if !keyInfo.key.FreeToPlaceUnshifted {
+				keyMap[keyInfo.key.MustUseUnshiftedRune] = &layout.Left.Rows[r][c]
 			}
-			if !key.FreeToPlaceShifted {
-				keyMap[key.MustUseShiftedRune] = &KeyPhysicalInfo{key: &layout.Left.Rows[r][c], side: &layout.Left, row: r, col: c}
+			if !keyInfo.key.FreeToPlaceShifted {
+				keyMap[keyInfo.key.MustUseShiftedRune] = &layout.Left.Rows[r][c]
 			}
 		}
 	}
 
-	for r, _ := range layout.Right.Rows {
-		for c, key := range layout.Right.Rows[r] {
-			if !key.FreeToPlaceUnshifted {
-				keyMap[key.MustUseUnshiftedRune] = &KeyPhysicalInfo{key: &layout.Right.Rows[r][c], side: &layout.Right, row: r, col: c}
+	for r := range layout.Right.Rows {
+		for c, keyInfo := range layout.Right.Rows[r] {
+			if !keyInfo.key.FreeToPlaceUnshifted {
+				keyMap[keyInfo.key.MustUseUnshiftedRune] = &layout.Right.Rows[r][c]
 			}
-			if !key.FreeToPlaceShifted {
-				keyMap[key.MustUseShiftedRune] = &KeyPhysicalInfo{key: &layout.Right.Rows[r][c], side: &layout.Right, row: r, col: c}
+			if !keyInfo.key.FreeToPlaceShifted {
+				keyMap[keyInfo.key.MustUseShiftedRune] = &layout.Right.Rows[r][c]
 			}
 		}
 	}
@@ -312,17 +325,17 @@ func (layout *Layout) mapRunesToPhysicalKeyInfo() map[rune]*KeyPhysicalInfo {
 
 func (layout *Layout) GetSwappableKeys() []*Key {
 	var keys []*Key
-	for r, _ := range layout.Left.Rows {
-		for c, key := range layout.Left.Rows[r] {
-			if key.Swappable {
-				keys = append(keys, &layout.Left.Rows[r][c])
+	for r := range layout.Left.Rows {
+		for _, keyInfo := range layout.Left.Rows[r] {
+			if keyInfo.swappable {
+				keys = append(keys, keyInfo.key)
 			}
 		}
 	}
-	for r, _ := range layout.Right.Rows {
-		for c, key := range layout.Right.Rows[r] {
-			if key.Swappable {
-				keys = append(keys, &layout.Right.Rows[r][c])
+	for r := range layout.Right.Rows {
+		for _, keyInfo := range layout.Right.Rows[r] {
+			if keyInfo.swappable {
+				keys = append(keys, keyInfo.key)
 			}
 		}
 	}
@@ -330,53 +343,58 @@ func (layout *Layout) GetSwappableKeys() []*Key {
 }
 
 func (layout *Layout) Duplicate() Layout {
-	return deepCopyLayout(*layout)
+	return layout.DeepCopy()
 }
 
-// deepCopyLayout creates an efficient deep copy of the given Layout
-func deepCopyLayout(layout Layout) Layout {
-	copiedLayout := Layout{
-		Name:              layout.Name,
-		SupportsOverrides: layout.SupportsOverrides,
-		FreeToPlaceRunes:  layout.FreeToPlaceRunes,
-		NumberOfKeys:      layout.NumberOfKeys,
-	}
+func (layout *Layout) DeepCopy() Layout {
+	// Create a new Layout object
+	copyLayout := *layout
 
-	// Deep copy EssentialRunes
-	copiedLayout.EssentialRunes = make([]rune, len(layout.EssentialRunes))
-	copy(copiedLayout.EssentialRunes, layout.EssentialRunes)
+	// Deep copy the left and right sides
+	copyLayout.Left = layout.Left.DeepCopy()
+	copyLayout.Right = layout.Right.DeepCopy()
 
-	// Deep copy Left and Right sides
-	copiedLayout.Left = deepCopySide(layout.Left)
-	copiedLayout.Right = deepCopySide(layout.Right)
+	// Deep copy the EssentialRunes slice
+	copyLayout.EssentialRunes = make([]rune, len(layout.EssentialRunes))
+	copy(copyLayout.EssentialRunes, layout.EssentialRunes)
 
-	return copiedLayout
+	return copyLayout
 }
 
-func deepCopySide(side Side) Side {
-	copiedSide := Side{
-		RawRows:    make([][]string, len(side.RawRows)),
-		Rows:       make([][]Key, len(side.Rows)),
-		ThumbHome:  side.ThumbHome,
-		IndexHome:  side.IndexHome,
-		MiddleHome: side.MiddleHome,
-		RingHome:   side.RingHome,
-		PinkieHome: side.PinkieHome,
+func (s *Side) DeepCopy() Side {
+	// Create a new Side object
+	copySide := *s
+
+	// Deep copy the RawRows slice of slices
+	copySide.RawRows = make([][]string, len(s.RawRows))
+	for i := range s.RawRows {
+		copySide.RawRows[i] = make([]string, len(s.RawRows[i]))
+		copy(copySide.RawRows[i], s.RawRows[i])
 	}
 
-	// Deep copy RawRows
-	for i, row := range side.RawRows {
-		copiedSide.RawRows[i] = make([]string, len(row))
-		copy(copiedSide.RawRows[i], row)
+	// Deep copy the Rows slice of slices
+	copySide.Rows = make([][]KeyPhysicalInfo, len(s.Rows))
+	for i := range s.Rows {
+		copySide.Rows[i] = make([]KeyPhysicalInfo, len(s.Rows[i]))
+		for j := range s.Rows[i] {
+			copySide.Rows[i][j] = s.Rows[i][j].DeepCopy()
+		}
 	}
 
-	// Deep copy Rows
-	for i, row := range side.Rows {
-		copiedSide.Rows[i] = make([]Key, len(row))
-		copy(copiedSide.Rows[i], row)
+	return copySide
+}
+
+func (kpi *KeyPhysicalInfo) DeepCopy() KeyPhysicalInfo {
+	copyKpi := *kpi
+
+	// Deep copy the key pointer
+	if kpi.key != nil {
+		newKey := *kpi.key
+		copyKpi.key = &newKey
 	}
 
-	return copiedSide
+	// No need to copy primitives like associatedFinger, cost, etc.
+	return copyKpi
 }
 
 func (layout *Layout) String() string {
@@ -421,21 +439,21 @@ func (layout *Layout) stringInternal(costs bool) string {
 	return sb.String()
 }
 
-func visualizeRow(row []Key, costs bool) string {
+func visualizeRow(row []KeyPhysicalInfo, costs bool) string {
 	var keys []string
 
 	if !costs {
-		for _, key := range row {
-			if key.MustUseUnshiftedRune != 0 {
-				displayRune := RuneDisplayVersion(key.MustUseUnshiftedRune)
+		for _, keyInfo := range row {
+			if keyInfo.key.MustUseUnshiftedRune != 0 {
+				displayRune := RuneDisplayVersion(keyInfo.key.MustUseUnshiftedRune)
 				keys = append(keys, fmt.Sprintf("[%c]", displayRune))
 			} else {
-				keys = append(keys, fmt.Sprintf("[%c]", RuneDisplayVersion(rune(0))))
+				keys = append(keys, fmt.Sprintf("[%c]", ' '))
 			}
 		}
 	} else {
-		for _, key := range row {
-			keys = append(keys, fmt.Sprintf("[%1.2f]", key.Cost))
+		for _, keyInfo := range row {
+			keys = append(keys, fmt.Sprintf("[%1.2f]", keyInfo.cost))
 		}
 	}
 

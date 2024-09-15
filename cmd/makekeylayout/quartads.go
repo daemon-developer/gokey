@@ -29,7 +29,8 @@ func isValidRune(r rune, validRunes map[rune]int) bool {
 	return ok
 }
 
-func PrepareQuartadList(s string, layout Layout) QuartadInfo {
+func PrepareQuartadList(s string, user User) QuartadInfo {
+	layout := user.Layout
 	foundRunes := make(map[rune]int)
 	runesNeedingPlacing := make(map[rune]int)
 	quartads := make(QuartadList)
@@ -48,6 +49,13 @@ func PrepareQuartadList(s string, layout Layout) QuartadInfo {
 
 	// Ensure essential runes are included
 	for _, r := range layout.EssentialRunes {
+		validRunes[r] = foundRunes[r]
+	}
+
+	// The essential from the layout are essential meet the needs of hardcoded
+	// keys on that layout. We now also need to add any the user has asked for
+	reqRunes := []rune(user.Required)
+	for _, r := range reqRunes {
 		validRunes[r] = foundRunes[r]
 	}
 
@@ -122,7 +130,7 @@ func PrepareQuartadList(s string, layout Layout) QuartadInfo {
 	return QuartadInfo{quartads, orderedRunesNeedingPlacing, orderedInvalidRunes}
 }
 
-func GetQuartadList(referenceTextFile string, layout Layout) (QuartadInfo, error) {
+func GetQuartadList(referenceTextFile string, user User) (QuartadInfo, error) {
 	// Open the corpus reference file and read the entire file content
 	content, err := os.ReadFile(referenceTextFile)
 	if err != nil {
@@ -133,7 +141,7 @@ func GetQuartadList(referenceTextFile string, layout Layout) (QuartadInfo, error
 	text := string(content)
 
 	// Process the text
-	quartadInfo := PrepareQuartadList(text, layout)
+	quartadInfo := PrepareQuartadList(text, user)
 	fmt.Printf("Using %d unique runes\n", len(quartadInfo.RunesToPlace))
 	fmt.Printf("%d unused runes\n", len(quartadInfo.RunesNotBeingPlaced))
 

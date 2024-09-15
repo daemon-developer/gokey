@@ -19,85 +19,92 @@ type KeyPenaltyResult struct {
 // InitPenaltyRules initializes the penalty rules.
 func InitPenaltyRules(user User) []KeyPenalty {
 	return []KeyPenalty{
-		{Name: "base", Function: BasePenalty, Cost: 0.0},
-		{Name: "same finger", Function: SameFingerPenalty, Cost: user.Penalties.SameFinger},
-		{Name: "long jump hand", Function: LongJumpHandPenalty, Cost: user.Penalties.LongJumpHand},
-		{Name: "long jump", Function: LongJumpPenalty, Cost: user.Penalties.LongJump},
-		{Name: "long jump consecutive", Function: LongJumpConsecutivePenalty, Cost: user.Penalties.LongJumpConsecutive},
-		{Name: "pinky/ring twist", Function: PinkyRingTwistPenalty, Cost: user.Penalties.PinkyRingTwist},
-		{Name: "roll reversal", Function: RollReversalPenalty, Cost: user.Penalties.RollReversal},
-		{Name: "same hand", Function: SameHandPenalty, Cost: user.Penalties.SameHand},
-		{Name: "alternating hand", Function: AlternatingHandPenalty, Cost: user.Penalties.AlternatingHand},
-		{Name: "roll out", Function: RollOutPenalty, Cost: user.Penalties.RollOut},
-		{Name: "roll in", Function: RollInPenalty, Cost: user.Penalties.RollIn},
-		{Name: "long jump sandwich", Function: LongJumpSandwichPenalty, Cost: user.Penalties.LongJumpSandwich},
-		{Name: "twist", Function: TwistPenalty, Cost: user.Penalties.Twist},
+		{Name: "Base", Function: calcBasePenalty, Cost: 1.0},
+		{Name: "SFB", Function: calcSFBPenalty, Cost: user.Penalties.SFB},
+		{Name: "Vertical finger travel", Function: calcVerticalFingerTravelPenalty, Cost: user.Penalties.VerticalFingerTravel},
+		{Name: "Long SFB", Function: calcLongSFBPenalty, Cost: user.Penalties.LongSFB},
+		{Name: "Lateral Stretch", Function: calcLateralStretchPenalty, Cost: user.Penalties.LateralStretch},
+		{Name: "Pinky/Ring Stretch", Function: calcPinkyRingStretchPenalty, Cost: user.Penalties.PinkyRingStretch},
+		{Name: "Roll reversal", Function: calcRollReversalPenalty, Cost: user.Penalties.RollReversal},
+		{Name: "Hand repetition", Function: calcHandRepetitionPenalty, Cost: user.Penalties.HandRepetition},
+		{Name: "Hand alternation", Function: calcHandAlternationPenalty, Cost: user.Penalties.HandAlternation},
+		{Name: "Outward roll", Function: calcOutwardRollPenalty, Cost: user.Penalties.OutwardRoll},
+		{Name: "Inward roll", Function: calcInwardRollPenalty, Cost: user.Penalties.InwardRoll},
+		{Name: "Scissor motion", Function: calcScissorMotionPenalty, Cost: user.Penalties.ScissorMotion},
+		{Name: "Row change in roll", Function: calcRowChangeInRollPenalty, Cost: user.Penalties.RowChangeInRoll},
 	}
 }
 
-func BasePenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcBasePenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil {
 		return 0.0
 	}
-	return curr.key.Cost
+	return curr.cost * cost
 }
 
-func SameFingerPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+	if curr.associatedFinger == old1.associatedFinger {
+		if curr.key != old1.key {
+			return cost
+		}
+	}
+	return 0.0
+}
+
+func calcVerticalFingerTravelPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func LongJumpHandPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcLongSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func LongJumpPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcLateralStretchPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func LongJumpConsecutivePenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcPinkyRingStretchPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func PinkyRingTwistPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcRollReversalPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func RollReversalPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcHandRepetitionPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func SameHandPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcHandAlternationPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func AlternatingHandPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcOutwardRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func RollOutPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcInwardRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func RollInPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcScissorMotionPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
 
-func LongJumpSandwichPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
-	return 0.0
-}
-
-func TwistPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcRowChangeInRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
 	// TODO: Implement
 	return 0.0
 }
