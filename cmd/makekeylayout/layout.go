@@ -598,7 +598,7 @@ func visualizeRow(row []KeyPhysicalInfo, costs bool) string {
 	if !costs {
 		for _, keyInfo := range row {
 			if keyInfo.key.UnshiftedRune != 0 {
-				displayRune := RuneDisplayVersion(keyInfo.key.UnshiftedRune)
+				displayRune := RuneDisplayVersion(unicode.ToUpper(keyInfo.key.UnshiftedRune))
 				keys = append(keys, fmt.Sprintf("[%c]", displayRune))
 			} else {
 				keys = append(keys, fmt.Sprintf("[%c]", ' '))
