@@ -11,7 +11,7 @@ func main() {
 		panic(err)
 	}
 
-	quartadInfo, err := GetQuartadList("corpus/aliceinwonderland.txt", user)
+	quartadInfo, err := GetQuartadList("corpus/alice-and-prog.txt", user)
 	if err != nil {
 		panic(err)
 	}

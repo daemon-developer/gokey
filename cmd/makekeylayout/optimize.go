@@ -113,8 +113,8 @@ func (layout *Layout) shufflePosition(swappableKeys []*Key) {
 }
 
 func swapKeys(a, b *Key) {
-	a.MustUseUnshiftedRune, b.MustUseUnshiftedRune = b.MustUseUnshiftedRune, a.MustUseUnshiftedRune
-	a.FreeToPlaceUnshifted, b.FreeToPlaceUnshifted = b.FreeToPlaceUnshifted, a.FreeToPlaceUnshifted
-	a.MustUseShiftedRune, b.MustUseShiftedRune = b.MustUseShiftedRune, a.MustUseShiftedRune
-	a.FreeToPlaceShifted, b.FreeToPlaceShifted = b.FreeToPlaceShifted, a.FreeToPlaceShifted
+	a.UnshiftedRune, b.UnshiftedRune = b.UnshiftedRune, a.UnshiftedRune
+	a.UnshiftedIsFree, b.UnshiftedIsFree = b.UnshiftedIsFree, a.UnshiftedIsFree
+	a.ShiftedRune, b.ShiftedRune = b.ShiftedRune, a.ShiftedRune
+	a.ShiftedIsFree, b.ShiftedIsFree = b.ShiftedIsFree, a.ShiftedIsFree
 }

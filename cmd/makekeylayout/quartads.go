@@ -15,7 +15,7 @@ type QuartadInfo struct {
 
 func isTypeableRune(r rune) bool {
 	// Check for common typeable characters
-	if unicode.IsPrint(r) || r == '\t' || r == '\n' {
+	if (unicode.IsPrint(r) || r == '\t' || r == '\n') && r < 128 {
 		return true
 	}
 
@@ -35,23 +35,37 @@ func PrepareQuartadList(s string, user User) QuartadInfo {
 	runes := []rune(s)
 	n := len(runes)
 
-	// Count the frequency of all the runes
-	for i := 0; i < n; i++ {
-		if isTypeableRune(runes[i]) {
-			foundRunes[runes[i]]++
-		}
-	}
-
 	// Ensure essential runes are included
 	for _, r := range layout.EssentialRunes {
-		foundRunes[r] = foundRunes[r]
+		if unicode.IsLetter(r) {
+			foundRunes[unicode.ToUpper(r)] = 0
+			foundRunes[unicode.ToLower(r)] = 0
+		} else {
+			foundRunes[r] = 0
+		}
 	}
 
 	// The essential from the layout are essential meet the needs of hardcoded
 	// keys on that layout. We now also need to add any the user has asked for
 	reqRunes := []rune(user.Required)
 	for _, r := range reqRunes {
-		foundRunes[r] = foundRunes[r]
+		if unicode.IsLetter(r) {
+			foundRunes[unicode.ToUpper(r)] = 0
+			foundRunes[unicode.ToLower(r)] = 0
+		} else {
+			foundRunes[r] = 0
+		}
+
+	}
+
+	// Count the frequency of all the runes
+	for i := 0; i < n; i++ {
+		if isTypeableRune(runes[i]) {
+			if _, ok := foundRunes[runes[i]]; !ok {
+				fmt.Printf("Found rune '%c'\n", RuneDisplayVersion(runes[i]))
+			}
+			foundRunes[runes[i]]++
+		}
 	}
 
 	// Map runes onto the keyboard in usage order (with essential first) so

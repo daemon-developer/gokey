@@ -31,10 +31,10 @@ const (
 )
 
 type Key struct {
-	MustUseUnshiftedRune rune
-	MustUseShiftedRune   rune
-	FreeToPlaceUnshifted bool
-	FreeToPlaceShifted   bool
+	UnshiftedRune   rune
+	ShiftedRune     rune
+	UnshiftedIsFree bool
+	ShiftedIsFree   bool
 }
 
 type KeyPhysicalInfo struct {
@@ -117,10 +117,10 @@ func (layout *Layout) ProcessRows(s *Side, essentialRunes *map[rune]bool, suppor
 				return 0, 0, fmt.Errorf("error parsing keyInfo at row %d, col %d: %v", r, c, err)
 			}
 			keyRow[c] = keyInfo
-			if keyInfo.key.FreeToPlaceUnshifted {
+			if keyInfo.key.UnshiftedIsFree {
 				freeToPlaceRunes++
 			}
-			if keyInfo.key.FreeToPlaceShifted {
+			if keyInfo.key.ShiftedIsFree {
 				freeToPlaceRunes++
 			}
 		}
@@ -141,8 +141,8 @@ func (layout *Layout) parseKeyString(s *Side, r, c int, keyStr string, essential
 	}
 
 	key := Key{
-		FreeToPlaceUnshifted: true,
-		FreeToPlaceShifted:   true,
+		UnshiftedIsFree: true,
+		ShiftedIsFree:   true,
 	}
 
 	keyInfo := KeyPhysicalInfo{
@@ -162,44 +162,44 @@ func (layout *Layout) parseKeyString(s *Side, r, c int, keyStr string, essential
 	switch keyContent {
 	case "*":
 		// Free to place on both layers
-		key.FreeToPlaceUnshifted = true
-		key.FreeToPlaceShifted = true
+		key.UnshiftedIsFree = true
+		key.ShiftedIsFree = true
 		keyInfo.swappable = true
 	case "\n", "\t", "\b", " ":
 		// Control characters
-		key.MustUseUnshiftedRune = runeFromString(keyContent)
-		(*essentialRunes)[key.MustUseUnshiftedRune] = true
-		key.FreeToPlaceUnshifted = false
-		key.FreeToPlaceShifted = false
+		key.UnshiftedRune = runeFromString(keyContent)
+		key.ShiftedRune = key.UnshiftedRune
+		(*essentialRunes)[key.UnshiftedRune] = true
+		key.UnshiftedIsFree = false
+		key.ShiftedIsFree = false
 	default:
 		if len(keyContent) == 1 && unicode.IsDigit(rune(keyContent[0])) {
 			// Number keys
-			key.MustUseUnshiftedRune = rune(keyContent[0])
-			(*essentialRunes)[key.MustUseUnshiftedRune] = true
-			key.FreeToPlaceUnshifted = false
-			key.FreeToPlaceShifted = true
+			key.UnshiftedRune = rune(keyContent[0])
+			(*essentialRunes)[key.UnshiftedRune] = true
+			key.UnshiftedIsFree = false
+			key.ShiftedIsFree = true
 			if !supportOverrides {
-				shiftedRune := locale.unshiftedToShifted[key.MustUseUnshiftedRune]
-				key.MustUseShiftedRune = shiftedRune
-				(*essentialRunes)[key.MustUseShiftedRune] = true
-				key.FreeToPlaceShifted = false
+				shiftedRune := locale.unshiftedToShifted[key.UnshiftedRune]
+				key.ShiftedRune = shiftedRune
+				(*essentialRunes)[key.ShiftedRune] = true
+				key.ShiftedIsFree = false
 			}
 		} else if len(keyContent) == 1 && unicode.IsLetter(rune(keyContent[0])) {
 			// Alphabetic letters
 			lowerRune := unicode.ToLower(rune(keyContent[0]))
 			upperRune := unicode.ToUpper(rune(keyContent[0]))
-			key.MustUseUnshiftedRune = lowerRune
-			(*essentialRunes)[key.MustUseUnshiftedRune] = true
-			key.MustUseShiftedRune = upperRune
-			(*essentialRunes)[key.MustUseShiftedRune] = true
-
-			key.FreeToPlaceUnshifted = false
-			key.FreeToPlaceShifted = false
+			key.UnshiftedRune = lowerRune
+			(*essentialRunes)[key.UnshiftedRune] = true
+			key.ShiftedRune = upperRune
+			(*essentialRunes)[key.ShiftedRune] = true
+			key.UnshiftedIsFree = false
+			key.ShiftedIsFree = false
 		} else {
 			// Other symbols or fixed assignments
-			key.MustUseUnshiftedRune = runeFromString(keyContent)
-			key.FreeToPlaceUnshifted = false
-			key.FreeToPlaceShifted = true // Assuming shifted layer is free
+			key.UnshiftedRune = runeFromString(keyContent)
+			key.UnshiftedIsFree = false
+			key.ShiftedIsFree = true // Assuming shifted layer is free
 		}
 	}
 
@@ -301,22 +301,22 @@ func (layout *Layout) mapRunesToPhysicalKeyInfo() map[rune]*KeyPhysicalInfo {
 
 	for r := range layout.Left.Rows {
 		for c, keyInfo := range layout.Left.Rows[r] {
-			if !keyInfo.key.FreeToPlaceUnshifted {
-				keyMap[keyInfo.key.MustUseUnshiftedRune] = &layout.Left.Rows[r][c]
+			if !keyInfo.key.UnshiftedIsFree {
+				keyMap[keyInfo.key.UnshiftedRune] = &layout.Left.Rows[r][c]
 			}
-			if !keyInfo.key.FreeToPlaceShifted {
-				keyMap[keyInfo.key.MustUseShiftedRune] = &layout.Left.Rows[r][c]
+			if !keyInfo.key.ShiftedIsFree {
+				keyMap[keyInfo.key.ShiftedRune] = &layout.Left.Rows[r][c]
 			}
 		}
 	}
 
 	for r := range layout.Right.Rows {
 		for c, keyInfo := range layout.Right.Rows[r] {
-			if !keyInfo.key.FreeToPlaceUnshifted {
-				keyMap[keyInfo.key.MustUseUnshiftedRune] = &layout.Right.Rows[r][c]
+			if !keyInfo.key.UnshiftedIsFree {
+				keyMap[keyInfo.key.UnshiftedRune] = &layout.Right.Rows[r][c]
 			}
-			if !keyInfo.key.FreeToPlaceShifted {
-				keyMap[keyInfo.key.MustUseShiftedRune] = &layout.Right.Rows[r][c]
+			if !keyInfo.key.ShiftedIsFree {
+				keyMap[keyInfo.key.ShiftedRune] = &layout.Right.Rows[r][c]
 			}
 		}
 	}
@@ -345,6 +345,9 @@ func (layout *Layout) GetSwappableKeys() []*Key {
 
 func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[rune]int {
 	orderedFoundRunes := sortMapByValueDescToArray(foundRunes)
+	for _, r := range orderedFoundRunes {
+		fmt.Printf("Rune '%c' used %d times\n", RuneDisplayVersion(r), foundRunes[r])
+	}
 	orderedKeyInfos := layout.getOrderedKeysByCost()
 
 	// Before we start assigning keys, we'll run over the current layout and mark that certain runes are
@@ -352,22 +355,24 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 	assignedRunes := make(map[rune]int)
 	alreadyAssigned := make(map[rune]bool)
 	for _, keyInfo := range orderedKeyInfos {
-		if keyInfo.key.FreeToPlaceUnshifted == false {
-			r := keyInfo.key.MustUseUnshiftedRune
+		if keyInfo.key.UnshiftedIsFree == false {
+			r := keyInfo.key.UnshiftedRune
 			alreadyAssigned[r] = true
 			assignedRunes[r] = foundRunes[r]
 		}
-		if keyInfo.key.FreeToPlaceShifted == false {
-			r := keyInfo.key.MustUseShiftedRune
+		if keyInfo.key.ShiftedIsFree == false {
+			r := keyInfo.key.ShiftedRune
 			alreadyAssigned[r] = true
 			assignedRunes[r] = foundRunes[r]
 		}
 	}
 
-	var i int
-
-	for _, keyInfo := range orderedKeyInfos {
+	i := 0
+	k := 0
+	for i < len(orderedFoundRunes) && k < len(orderedKeyInfos) {
+		keyInfo := orderedKeyInfos[k]
 		if i >= len(orderedFoundRunes) {
+			fmt.Println("Breaking loop as out of ordered runes")
 			break
 		}
 
@@ -381,17 +386,20 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 		}
 
 		if unicode.IsLetter(runeToAssign) {
-			if keyInfo.key.FreeToPlaceUnshifted == false {
+			if keyInfo.key.UnshiftedIsFree == false {
+				k++
+				fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
 				continue
 			}
 			lowerAlpha := unicode.ToLower(runeToAssign)
 			if alreadyAssigned[lowerAlpha] == false {
 				// If it's a letter, assign lower and upper case
 				upperAlpha := unicode.ToUpper(runeToAssign)
-				keyInfo.key.MustUseUnshiftedRune = lowerAlpha
-				keyInfo.key.MustUseShiftedRune = upperAlpha
-				keyInfo.key.FreeToPlaceUnshifted = false
-				keyInfo.key.FreeToPlaceShifted = false
+				fmt.Printf("Handling '%c' & '%c' as letter\n", upperAlpha, lowerAlpha)
+				keyInfo.key.UnshiftedRune = lowerAlpha
+				keyInfo.key.ShiftedRune = upperAlpha
+				keyInfo.key.UnshiftedIsFree = false
+				keyInfo.key.ShiftedIsFree = false
 				alreadyAssigned[lowerAlpha] = true
 				assignedRunes[lowerAlpha] = foundRunes[lowerAlpha]
 				assignedRunes[upperAlpha] = foundRunes[upperAlpha]
@@ -399,77 +407,68 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 		} else {
 			// Handle symbol assignment
 			if layout.SupportsOverrides {
-				if keyInfo.key.FreeToPlaceUnshifted {
-					keyInfo.key.MustUseUnshiftedRune = runeToAssign
-					keyInfo.key.FreeToPlaceUnshifted = false
+				if keyInfo.key.UnshiftedIsFree {
+					keyInfo.key.UnshiftedRune = runeToAssign
+					keyInfo.key.UnshiftedIsFree = false
 					alreadyAssigned[runeToAssign] = true
 					assignedRunes[runeToAssign] = foundRunes[runeToAssign]
 				} else {
-					keyInfo.key.MustUseShiftedRune = runeToAssign
-					keyInfo.key.FreeToPlaceShifted = false
+					keyInfo.key.ShiftedRune = runeToAssign
+					keyInfo.key.ShiftedIsFree = false
 					alreadyAssigned[runeToAssign] = true
 					assignedRunes[runeToAssign] = foundRunes[runeToAssign]
 				}
 			} else {
-				if keyInfo.key.FreeToPlaceUnshifted == false {
+				if keyInfo.key.UnshiftedIsFree == false {
+					k++
+					fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
 					continue
 				}
 				// Use locale-based symbol mapping if overrides aren't supported
 				if shiftedRune, exists := user.Locale.unshiftedToShifted[runeToAssign]; exists {
-					keyInfo.key.MustUseUnshiftedRune = runeToAssign
-					keyInfo.key.MustUseShiftedRune = shiftedRune
-					keyInfo.key.FreeToPlaceUnshifted = false
-					keyInfo.key.FreeToPlaceShifted = false
+					fmt.Printf("Handling '%c' & '%c' as unshifted symbol\n", runeToAssign, shiftedRune)
+					keyInfo.key.UnshiftedRune = runeToAssign
+					keyInfo.key.ShiftedRune = shiftedRune
+					keyInfo.key.UnshiftedIsFree = false
+					keyInfo.key.ShiftedIsFree = false
 					alreadyAssigned[runeToAssign] = true
 					alreadyAssigned[shiftedRune] = true
 					assignedRunes[runeToAssign] = foundRunes[runeToAssign]
 					assignedRunes[shiftedRune] = foundRunes[shiftedRune]
 				} else if unshiftedRune, exists := user.Locale.shiftedToUnshifted[runeToAssign]; exists {
-					skip := false
-					for _, r := range user.Required {
-						if unshiftedRune == r {
-							// Already handled
-							skip = true
-							break
-						}
-					}
-					if !skip {
-						for _, r := range layout.EssentialRunes {
-							if unshiftedRune == r {
-								// Already handled
-								skip = true
-								break
-							}
-						}
-					}
-					if skip {
-						i++
-						continue
-					}
-					keyInfo.key.MustUseUnshiftedRune = unshiftedRune
-					keyInfo.key.MustUseShiftedRune = runeToAssign
-					keyInfo.key.FreeToPlaceUnshifted = false
-					keyInfo.key.FreeToPlaceShifted = false
+					fmt.Printf("Handling '%c' & '%c' as shifted symbol\n", runeToAssign, unshiftedRune)
+					keyInfo.key.UnshiftedRune = unshiftedRune
+					keyInfo.key.ShiftedRune = runeToAssign
+					keyInfo.key.UnshiftedIsFree = false
+					keyInfo.key.ShiftedIsFree = false
 					alreadyAssigned[runeToAssign] = true
 					alreadyAssigned[unshiftedRune] = true
 					assignedRunes[unshiftedRune] = foundRunes[unshiftedRune]
 					assignedRunes[runeToAssign] = foundRunes[runeToAssign]
-
 				} else {
 					// Not actually symbols so will be things like ENTER or backspace
-					keyInfo.key.MustUseUnshiftedRune = runeToAssign
-					keyInfo.key.MustUseShiftedRune = runeToAssign
-					keyInfo.key.FreeToPlaceUnshifted = false
-					keyInfo.key.FreeToPlaceShifted = false
+					fmt.Printf("Handling '%c' as non-symbol\n", RuneDisplayVersion(runeToAssign))
+					keyInfo.key.UnshiftedRune = runeToAssign
+					keyInfo.key.ShiftedRune = runeToAssign
+					keyInfo.key.UnshiftedIsFree = false
+					keyInfo.key.ShiftedIsFree = false
 					alreadyAssigned[runeToAssign] = true
 					assignedRunes[runeToAssign] = foundRunes[runeToAssign]
 				}
 			}
 		}
 
-		fmt.Printf("Assigned '%c' to a key\n", RuneDisplayVersion(runeToAssign))
 		i++
+		if keyInfo.key.UnshiftedIsFree == false {
+			k++
+		}
 	}
+
+	for r, v := range assignedRunes {
+		fmt.Printf("Assigned rune '%c' to a key (rune was used %d times)\n", RuneDisplayVersion(r), v)
+	}
+
+	fmt.Println(layout.String())
 
 	// Return the runes we have assigned to keys
 	return assignedRunes
@@ -598,8 +597,8 @@ func visualizeRow(row []KeyPhysicalInfo, costs bool) string {
 
 	if !costs {
 		for _, keyInfo := range row {
-			if keyInfo.key.MustUseUnshiftedRune != 0 {
-				displayRune := RuneDisplayVersion(keyInfo.key.MustUseUnshiftedRune)
+			if keyInfo.key.UnshiftedRune != 0 {
+				displayRune := RuneDisplayVersion(keyInfo.key.UnshiftedRune)
 				keys = append(keys, fmt.Sprintf("[%c]", displayRune))
 			} else {
 				keys = append(keys, fmt.Sprintf("[%c]", ' '))
