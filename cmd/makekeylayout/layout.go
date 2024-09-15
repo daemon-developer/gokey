@@ -40,7 +40,7 @@ type Key struct {
 type KeyPhysicalInfo struct {
 	key              *Key
 	swappable        bool
-	side             *Side
+	hand             *Side
 	associatedFinger Finger
 	cost             float64
 	row              int
@@ -148,7 +148,7 @@ func (layout *Layout) parseKeyString(s *Side, r, c int, keyStr string, essential
 	keyInfo := KeyPhysicalInfo{
 		key:              &key,
 		swappable:        false,
-		side:             s,
+		hand:             s,
 		associatedFinger: finger,
 		cost:             0,
 		row:              r,

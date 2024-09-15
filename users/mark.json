@@ -1,6 +1,6 @@
 {
   "name": "Mark Allen",
-  "keyboard": "zsa-voyager",
+  "keyboard": "crkbd",
   "locale": "iso-uk-mac",
   "required": "abcedfghijklmnopqrstuvwxyz",
   "left": {
@@ -19,16 +19,16 @@
   },
   "penalties": {
     "sfb": 0.0,
-    "vertical_finger_travel": 5.0,
-    "long_sfb": 5.0,
+    "vertical_finger_travel": 3.0,
+    "long_sfb": 10.0,
     "lateral_stretch": 5.0,
-    "pinky_ring_stretch": 5.0,
-    "roll_reversal": 5.0,
-    "hand_repetition": 5.0,
-    "hand_alternation": 5.0,
-    "outward_roll": 5.0,
-    "inward_roll": 5.0,
-    "scissor_motion": 5.0,
-    "row_change_in_roll": 5.0
+    "pinky_ring_stretch": 15.0,
+    "roll_reversal": 10.0,
+    "hand_repetition": 1.0,
+    "hand_alternation": -0.5,
+    "outward_roll": -0.5,
+    "inward_roll": -1.0,
+    "scissor_motion": 3.0,
+    "row_change_in_roll": 10.0
   }
 }

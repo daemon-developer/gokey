@@ -54,3 +54,10 @@ func RuneDisplayVersion(r rune) rune {
 
 	return r
 }
+
+func AbsI(a int) int {
+	if a >= 0 {
+		return a
+	}
+	return -a
+}

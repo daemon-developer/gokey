@@ -1,0 +1,30 @@
+{
+  "name": "CRKBD",
+  "supports_overrides": false,
+  "left": {
+    "rows": [
+      ["*P", "*P", "*R", "*M", "*I", "*I"],
+      ["*P", "*P", "*R", "*M", "*I", "*I"],
+      ["*P", "*P", "*R", "*M", "*I", "*I"],
+      ["*T", "\tT", "*T"]
+    ],
+    "thumb_home": {"row": 2, "col": 0},
+    "index_home": {"row": 1, "col": 4},
+    "middle_home": {"row": 1, "col": 3},
+    "ring_home": {"row": 1, "col": 2},
+    "pinkie_home": {"row": 1, "col": 1}
+  },
+  "right": {
+    "rows": [
+      ["*I", "*I", "*M", "*R", "*P", "*P"],
+      ["*I", "*I", "*M", "*R", "*P", "*P"],
+      ["*I", "*I", "*M", "*R", "*P", "*P"],
+      ["\nT", " T", "*T"]
+    ],
+    "thumb_home": {"row": 2, "col": 1},
+    "index_home": {"row": 1, "col": 1},
+    "middle_home": {"row": 1, "col": 2},
+    "ring_home": {"row": 1, "col": 3},
+    "pinkie_home": {"row": 1, "col": 4}
+  }
+}

@@ -46,7 +46,7 @@ func calcSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
-	if curr.associatedFinger == old1.associatedFinger {
+	if curr.hand == old1.hand && curr.associatedFinger == old1.associatedFinger {
 		if curr.key != old1.key {
 			return cost
 		}
@@ -55,57 +55,169 @@ func calcSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float
 }
 
 func calcVerticalFingerTravelPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+	if curr.hand == old1.hand {
+		delta := AbsI(curr.row - old1.row)
+		if delta >= 2 {
+			return cost
+		}
+	}
 	return 0.0
 }
 
 func calcLongSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+	if curr.hand == old1.hand && curr.associatedFinger == old1.associatedFinger {
+		delta := AbsI(curr.row - old1.row)
+		if delta >= 2 {
+			return cost
+		}
+	}
 	return 0.0
 }
 
 func calcLateralStretchPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+
+	// Check if both keys were pressed by the same hand and there is a long jump between rows
+	if curr.hand == old1.hand {
+		// Check if there's a vertical jump between the top and bottom rows
+		if (curr.vertDeltaToHome < 0 && old1.vertDeltaToHome > 0) ||
+			(curr.vertDeltaToHome > 0 && old1.vertDeltaToHome < 0) {
+
+			// Check for specific finger combinations that are penalized
+			if (curr.associatedFinger == Ring && old1.associatedFinger == Pinkie) ||
+				(curr.associatedFinger == Pinkie && old1.associatedFinger == Ring) ||
+				(curr.associatedFinger == Middle && old1.associatedFinger == Ring) ||
+				(curr.associatedFinger == Ring && old1.associatedFinger == Middle) ||
+				(curr.associatedFinger == Index &&
+					(old1.associatedFinger == Middle || old1.associatedFinger == Ring) &&
+					curr.vertDeltaToHome < 0 && old1.vertDeltaToHome > 0) {
+				// Apply the penalty
+				return cost
+			}
+		}
+	}
+
 	return 0.0
+
 }
 
 func calcPinkyRingStretchPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+	if curr.hand == old1.hand {
+		if curr.associatedFinger == Pinkie && old1.associatedFinger == Ring {
+			if curr.row < old1.row {
+				return cost
+			}
+		} else if curr.associatedFinger == Ring && old1.associatedFinger == Pinkie {
+			if curr.row < old1.row {
+				return cost
+			}
+		}
+	}
 	return 0.0
 }
 
 func calcRollReversalPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil || old2 == nil {
+		return 0.0
+	}
+	if curr.hand == old1.hand && old1.hand == old2.hand {
+		// Check for a roll reversal where finger sequence reverses
+		if (curr.associatedFinger == Middle && old1.associatedFinger == Pinkie && old2.associatedFinger == Ring) ||
+			(curr.associatedFinger == Ring && old1.associatedFinger == Pinkie && old2.associatedFinger == Middle) {
+			return cost
+		}
+	}
 	return 0.0
 }
 
 func calcHandRepetitionPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil || old2 == nil || old3 == nil {
+		return 0.0
+	}
+	// Check if all keys were pressed by the same hand
+	if curr.hand == old1.hand && old1.hand == old2.hand && old2.hand == old3.hand {
+		return cost
+	}
 	return 0.0
 }
 
 func calcHandAlternationPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil || old2 == nil || old3 == nil {
+		return 0.0
+	}
+	// Check if the hands alternate three times in a row
+	if curr.hand != old1.hand && old1.hand != old2.hand && old2.hand != old3.hand {
+		return cost
+	}
 	return 0.0
 }
 
 func calcOutwardRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+	if curr.hand == old1.hand {
+		if isRollOut(curr.associatedFinger, old1.associatedFinger) {
+			return cost
+		}
+	}
 	return 0.0
 }
 
 func calcInwardRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+	if curr.hand == old1.hand {
+		if isRollIn(curr.associatedFinger, old1.associatedFinger) {
+			return cost
+		}
+	}
 	return 0.0
 }
 
 func calcScissorMotionPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+	if curr.hand == old1.hand {
+		// Penalize scissor-like motion (e.g., ring finger and index finger pressing on opposite rows)
+		if (curr.associatedFinger == Ring && old1.associatedFinger == Index && curr.row != old1.row) ||
+			(curr.associatedFinger == Index && old1.associatedFinger == Ring && curr.row != old1.row) {
+			return cost
+		}
+	}
 	return 0.0
 }
 
 func calcRowChangeInRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
-	// TODO: Implement
+	if curr == nil || old1 == nil || old2 == nil {
+		return 0.0
+	}
+
+	// Check if the row movement spans all three rows (Top -> Home -> Bottom or Bottom -> Home -> Top)
+	if (curr.vertDeltaToHome < 0 && old1.vertDeltaToHome == 0 && old2.vertDeltaToHome > 0) ||
+		(curr.vertDeltaToHome > 0 && old1.vertDeltaToHome == 0 && old2.vertDeltaToHome < 0) {
+
+		// Check if the movement is a roll out or roll in
+		if (isRollOut(curr.associatedFinger, old1.associatedFinger) && isRollOut(old1.associatedFinger, old2.associatedFinger)) ||
+			(isRollIn(curr.associatedFinger, old1.associatedFinger) && isRollIn(old1.associatedFinger, old2.associatedFinger)) {
+
+			// Apply the penalty
+			return cost
+		}
+	}
 	return 0.0
 }
 
@@ -129,6 +241,40 @@ func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKey
 	}
 
 	return totalPenalty, results
+}
+
+func isRollOut(currFinger, prevFinger Finger) bool {
+	switch currFinger {
+	case Thumb:
+		return false
+	case Index:
+		return prevFinger == Thumb
+	case Middle:
+		return prevFinger == Thumb || prevFinger == Index
+	case Ring:
+		return prevFinger == Middle || prevFinger == Index
+	case Pinkie:
+		return prevFinger == Ring || prevFinger == Middle
+	default:
+		return false
+	}
+}
+
+func isRollIn(currFinger, prevFinger Finger) bool {
+	switch currFinger {
+	case Thumb:
+		return prevFinger != Thumb
+	case Index:
+		return prevFinger == Thumb || prevFinger == Index
+	case Middle:
+		return prevFinger == Pinkie || prevFinger == Ring
+	case Ring:
+		return prevFinger == Pinkie
+	case Pinkie:
+		return false
+	default:
+		return false
+	}
 }
 
 // calculateQuartadPenalty calculates the penalty for a given quartad.
