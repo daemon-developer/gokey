@@ -1,0 +1,8 @@
+/all-source.txt
+.DS_Store
+/util
+/corpus/alice-and-prog.txt
+/corpus/cpp.txt
+/corpus/golang.txt
+/corpus/rust.txt
+/.idea

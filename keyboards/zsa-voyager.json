@@ -1,0 +1,32 @@
+{
+  "name": "ZSA Voyager",
+  "supports_overrides": false,
+  "left": {
+    "rows": [
+      ["*P", "1P", "2R", "3M", "4I", "5I"],
+      ["*P", "*P", "*R", "*M", "*I", "*I"],
+      ["*P", "*P", "*R", "*M", "*I", "*I"],
+      ["*P", "*P", "*R", "*M", "*I", "*I"],
+      ["*T", "\tT"]
+    ],
+    "thumb_home": {"row": 3, "col": 0},
+    "index_home": {"row": 2, "col": 4},
+    "middle_home": {"row": 2, "col": 3},
+    "ring_home": {"row": 2, "col": 2},
+    "pinkie_home": {"row": 2, "col": 1}
+  },
+  "right": {
+    "rows": [
+      ["6I", "7I", "8M", "9R", "0P", "*P"],
+      ["*I", "*I", "*M", "*R", "*P", "*P"],
+      ["*I", "*I", "*M", "*R", "*P", "*P"],
+      ["*I", "*I", "*M", "*R", "*P", "*P"],
+      ["\nT", " T"]
+    ],
+    "thumb_home": {"row": 3, "col": 1},
+    "index_home": {"row": 2, "col": 1},
+    "middle_home": {"row": 2, "col": 2},
+    "ring_home": {"row": 2, "col": 3},
+    "pinkie_home": {"row": 2, "col": 4}
+  }
+}

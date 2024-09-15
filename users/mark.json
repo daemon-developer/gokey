@@ -1,0 +1,33 @@
+{
+  "name": "Mark Allen",
+  "keyboard": "zsa-voyager",
+  "locale": "iso-uk-mac",
+  "left": {
+    "thumb": {"cost": 0, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.0},
+    "index": {"cost": 0, "up_cost": 1.5, "down_cost": 1.0, "h_cost": 1.0},
+    "middle": {"cost": 0, "up_cost": 1.0, "down_cost": 1.5, "h_cost": 0.0},
+    "ring": {"cost": 0.25, "up_cost": 1.25, "down_cost": 1.75, "h_cost": 0.0},
+    "pinkie": {"cost": 0.5, "up_cost": 1.5, "down_cost": 2.0, "h_cost": 1.0}
+  },
+  "right": {
+    "thumb": {"cost": 0, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.0},
+    "index": {"cost": 0, "up_cost": 1.5, "down_cost": 1.0, "h_cost": 1.0},
+    "middle": {"cost": 0, "up_cost": 1.0, "down_cost": 1.5, "h_cost": 0.0},
+    "ring": {"cost": 0.25, "up_cost": 1.25, "down_cost": 1.75, "h_cost": 0.0},
+    "pinkie": {"cost": 0.5, "up_cost": 1.5, "down_cost": 2.0, "h_cost": 1.0}
+  },
+  "penalties": {
+    "same_finger": 5.0,
+    "long_jump_hand": 5.0,
+    "long_jump": 5.0,
+    "long_jump_consecutive": 5.0,
+    "pinky_ring_twist": 5.0,
+    "roll_reversal": 5.0,
+    "same_hand": 5.0,
+    "alternating_hand": 5.0,
+    "roll_out": 5.0,
+    "roll_in": 5.0,
+    "long_jump_sandwich": 5.0,
+    "twist": 5.0
+  }
+}
