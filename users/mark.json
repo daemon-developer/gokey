@@ -1,14 +1,15 @@
 {
   "name": "Mark Allen",
   "keyboard": "zsa-voyager",
+  "corpus": ["corpus/aliceinwonderland.txt"],
   "locale": "iso-uk-mac",
   "required": "abcedfghijklmnopqrstuvwxyz",
   "left": {
     "thumb": {"cost": 0.2, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.1},
     "index": {"cost": 0, "up_cost": 1.5, "down_cost": 1.0, "h_cost": 1.0},
-    "middle": {"cost": 0.1, "up_cost": 1.0, "down_cost": 1.5, "h_cost": 0.0},
-    "ring": {"cost": 0.25, "up_cost": 1.25, "down_cost": 1.75, "h_cost": 0.0},
-    "pinkie": {"cost": 0.75, "up_cost": 1.5, "down_cost": 2.0, "h_cost": 2.0}
+    "middle": {"cost": 0.15, "up_cost": 1.0, "down_cost": 1.5, "h_cost": 0.0},
+    "ring": {"cost": 0.3, "up_cost": 1.25, "down_cost": 1.75, "h_cost": 0.0},
+    "pinkie": {"cost": 0.8, "up_cost": 1.5, "down_cost": 2.0, "h_cost": 2.0}
   },
   "right": {
     "thumb": {"cost": 0.2, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.1},

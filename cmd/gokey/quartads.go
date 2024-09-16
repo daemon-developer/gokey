@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"unicode"
 )
 
@@ -105,18 +106,24 @@ func PrepareQuartadList(s string, user User) QuartadInfo {
 	return QuartadInfo{quartads, runesOnKeyboard}
 }
 
-func GetQuartadList(referenceTextFile string, user User) (QuartadInfo, error) {
-	// Open the corpus reference file and read the entire file content
-	content, err := os.ReadFile(referenceTextFile)
-	if err != nil {
-		return QuartadInfo{}, fmt.Errorf("error reading file: %w", err)
+func GetQuartadList(referenceTextFiles []string, user User) (QuartadInfo, error) {
+	// Read all the requested corpus files and concatenate them
+	sb := strings.Builder{}
+
+	for _, referenceTextFile := range referenceTextFiles {
+		// Open the corpus reference file and read the entire file content
+		content, err := os.ReadFile(referenceTextFile)
+		if err != nil {
+			return QuartadInfo{}, fmt.Errorf("error reading file: %w", err)
+		}
+
+		// Convert []byte to string and return
+		text := string(content)
+		sb.WriteString(text)
 	}
 
-	// Convert []byte to string and return
-	text := string(content)
-
 	// Process the text
-	quartadInfo := PrepareQuartadList(text, user)
+	quartadInfo := PrepareQuartadList(sb.String(), user)
 	fmt.Printf("Using %d unique runes\n", len(quartadInfo.RunesOnKeyboard))
 
 	// Sort and display top 50 quartads

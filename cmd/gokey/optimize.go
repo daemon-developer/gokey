@@ -11,7 +11,7 @@ type BestLayoutEntry struct {
 	Penalty float64
 }
 
-func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, topLayouts int, numSwaps int) {
+func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, iterations int, topLayouts int, numSwaps int) {
 	initLayout := layout.Duplicate()
 	penaltyRules := InitPenaltyRules(user)
 
@@ -30,7 +30,7 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, top
 	}
 
 	// Initialize simulated annealing
-	sa := NewSimulatedAnnealing()
+	sa := NewSimulatedAnnealing(iterations)
 
 	// Initialize best layouts list
 	var bestLayouts []BestLayoutEntry

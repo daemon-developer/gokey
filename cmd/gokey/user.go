@@ -22,10 +22,11 @@ type Hand struct {
 }
 
 type User struct {
-	Name        string `json:"name"`
-	Keyboard    string `json:"keyboard"`
-	RawLocale   string `json:"locale"`
-	RawRequired string `json:"required"`
+	Name        string   `json:"name"`
+	Keyboard    string   `json:"keyboard"`
+	Corpus      []string `json:"corpus"`
+	RawLocale   string   `json:"locale"`
+	RawRequired string   `json:"required"`
 	Required    []rune
 	Locale      Locale
 	Layout      Layout
