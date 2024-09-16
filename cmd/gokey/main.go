@@ -20,6 +20,7 @@ var (
 
 func init() {
 	rootCmd.Flags().IntVarP(&optIterations, "iterations", "i", 10000, "Number of iterations")
+	rootCmd.Flags().IntVarP(&optIterations, "swaps", "s", 3, "Number key swaps per iteration")
 	rootCmd.Flags().BoolVarP(&optDebug, "debug", "d", false, "Enable debug mode")
 }
 

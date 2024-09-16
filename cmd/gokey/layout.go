@@ -165,7 +165,7 @@ func (layout *Layout) parseKeyString(s *Side, r, c int, keyStr string, essential
 		key.UnshiftedIsFree = true
 		key.ShiftedIsFree = true
 		keyInfo.swappable = true
-	case "\n", "\t", "\b", " ":
+	case "\n", "\t", "\b", " ", "^":
 		// Control characters
 		key.UnshiftedRune = runeFromString(keyContent)
 		key.ShiftedRune = key.UnshiftedRune
@@ -215,6 +215,8 @@ func runeFromString(s string) rune {
 		return '\t'
 	case "\\b":
 		return '\b'
+	case "^":
+		return rune(ShiftModifier)
 	default:
 		return rune(s[0])
 	}

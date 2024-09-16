@@ -42,7 +42,9 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, ite
 	start, end := sa.GetSimulationRange()
 	for i := start; i < end; i++ {
 		if i%500 == 0 {
+			fmt.Println()
 			fmt.Println(acceptedLayout.String())
+			fmt.Printf("Iteration %d/%d (%2.1f%% complete)\n", i, end-1, float64(i)/float64(end-1)*100.0)
 		}
 
 		// Create a new layout by shuffling the accepted layout

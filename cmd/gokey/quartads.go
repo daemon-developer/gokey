@@ -258,7 +258,17 @@ func (q Quartad) String() string {
 }
 
 func (q Quartad) GetRune(i int) rune {
+	if i >= q.length {
+		panic(fmt.Errorf("quartad rune index %d out of bounds (length %d)", i, q.length))
+	}
 	return q.runes[i]
+}
+
+func (q Quartad) GetModifier(i int) Modifier {
+	if i >= q.length {
+		panic(fmt.Errorf("quartad modifer index %d out of bounds (length %d)", i, q.length))
+	}
+	return q.modifiers[i]
 }
 
 func MakeQuartad(s string, shiftedRunes map[rune]int) Quartad {

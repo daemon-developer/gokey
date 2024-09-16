@@ -7,7 +7,7 @@ type KeyPenalty struct {
 	Cost     float64
 }
 
-type PenaltyFunc func(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64
+type PenaltyFunc func(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64
 
 type KeyPenaltyResult struct {
 	Name     string
@@ -32,17 +32,19 @@ func InitPenaltyRules(user User) []KeyPenalty {
 		{Name: "Inward roll", Function: calcInwardRollPenalty, Cost: user.Penalties.InwardRoll},
 		{Name: "Scissor motion", Function: calcScissorMotionPenalty, Cost: user.Penalties.ScissorMotion},
 		{Name: "Row change in roll", Function: calcRowChangeInRollPenalty, Cost: user.Penalties.RowChangeInRoll},
+		{Name: "Base modifier", Function: calcBaseModifierPenalty, Cost: 1.0},
+		{Name: "Same finger modifier", Function: calcSameFingerModifierPenalty, Cost: user.Penalties.SameFingerModifier},
 	}
 }
 
-func calcBasePenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcBasePenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil {
 		return 0.0
 	}
 	return curr.cost * cost
 }
 
-func calcSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcSFBPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
@@ -54,7 +56,7 @@ func calcSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float
 	return 0.0
 }
 
-func calcVerticalFingerTravelPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcVerticalFingerTravelPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
@@ -67,7 +69,7 @@ func calcVerticalFingerTravelPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, co
 	return 0.0
 }
 
-func calcLongSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcLongSFBPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
@@ -80,7 +82,7 @@ func calcLongSFBPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) f
 	return 0.0
 }
 
-func calcLateralStretchPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcLateralStretchPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
@@ -109,7 +111,7 @@ func calcLateralStretchPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost flo
 
 }
 
-func calcPinkyRingStretchPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcPinkyRingStretchPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
@@ -127,7 +129,7 @@ func calcPinkyRingStretchPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost f
 	return 0.0
 }
 
-func calcRollReversalPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcRollReversalPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil || old2 == nil {
 		return 0.0
 	}
@@ -141,7 +143,7 @@ func calcRollReversalPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float
 	return 0.0
 }
 
-func calcHandRepetitionPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcHandRepetitionPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil || old2 == nil || old3 == nil {
 		return 0.0
 	}
@@ -152,7 +154,7 @@ func calcHandRepetitionPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost flo
 	return 0.0
 }
 
-func calcHandAlternationPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcHandAlternationPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil || old2 == nil || old3 == nil {
 		return 0.0
 	}
@@ -163,7 +165,7 @@ func calcHandAlternationPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost fl
 	return 0.0
 }
 
-func calcOutwardRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcOutwardRollPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
@@ -175,7 +177,7 @@ func calcOutwardRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float6
 	return 0.0
 }
 
-func calcInwardRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcInwardRollPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
@@ -187,7 +189,7 @@ func calcInwardRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64
 	return 0.0
 }
 
-func calcScissorMotionPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcScissorMotionPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil {
 		return 0.0
 	}
@@ -201,23 +203,45 @@ func calcScissorMotionPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost floa
 	return 0.0
 }
 
-func calcRowChangeInRollPenalty(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) float64 {
+func calcRowChangeInRollPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
 	if curr == nil || old1 == nil || old2 == nil {
 		return 0.0
 	}
 
-	// Check if the row movement spans all three rows (Top -> Home -> Bottom or Bottom -> Home -> Top)
-	if (curr.vertDeltaToHome < 0 && old1.vertDeltaToHome == 0 && old2.vertDeltaToHome > 0) ||
-		(curr.vertDeltaToHome > 0 && old1.vertDeltaToHome == 0 && old2.vertDeltaToHome < 0) {
+	if curr.hand == old1.hand && curr.hand == old2.hand {
+		// Check if the row movement spans all three rows (Top -> Home -> Bottom or Bottom -> Home -> Top)
+		if (curr.vertDeltaToHome < 0 && old1.vertDeltaToHome == 0 && old2.vertDeltaToHome > 0) ||
+			(curr.vertDeltaToHome > 0 && old1.vertDeltaToHome == 0 && old2.vertDeltaToHome < 0) {
 
-		// Check if the movement is a roll out or roll in
-		if (isRollOut(curr.associatedFinger, old1.associatedFinger) && isRollOut(old1.associatedFinger, old2.associatedFinger)) ||
-			(isRollIn(curr.associatedFinger, old1.associatedFinger) && isRollIn(old1.associatedFinger, old2.associatedFinger)) {
+			// Check if the movement is a roll out or roll in
+			if (isRollOut(curr.associatedFinger, old1.associatedFinger) && isRollOut(old1.associatedFinger, old2.associatedFinger)) ||
+				(isRollIn(curr.associatedFinger, old1.associatedFinger) && isRollIn(old1.associatedFinger, old2.associatedFinger)) {
 
-			// Apply the penalty
+				// Apply the penalty
+				return cost
+			}
+		}
+	}
+	return 0.0
+}
+
+func calcBaseModifierPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
+	if modCurr == nil {
+		return 0.0
+	}
+	return modCurr.cost * cost
+}
+
+func calcSameFingerModifierPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
+	if curr == nil || modCurr == nil {
+		return 0.0
+	}
+	if curr.hand == modCurr.hand {
+		if curr.associatedFinger == modCurr.associatedFinger {
 			return cost
 		}
 	}
+
 	return 0.0
 }
 
@@ -286,9 +310,13 @@ func penalize(quartad Quartad, count int, layout Layout, runesToKeyPhysicalKeyIn
 	old1 := getKey(quartad, 1, runesToKeyPhysicalKeyInfoMap)
 	old2 := getKey(quartad, 2, runesToKeyPhysicalKeyInfoMap)
 	old3 := getKey(quartad, 3, runesToKeyPhysicalKeyInfoMap)
+	modCurr := getModifier(quartad, 0, runesToKeyPhysicalKeyInfoMap)
+	mod1 := getModifier(quartad, 0, runesToKeyPhysicalKeyInfoMap)
+	mod2 := getModifier(quartad, 0, runesToKeyPhysicalKeyInfoMap)
+	mod3 := getModifier(quartad, 0, runesToKeyPhysicalKeyInfoMap)
 
 	for i, penalty := range penalties {
-		cost := penalty.Info.Function(curr, old1, old2, old3, penalty.Info.Cost) * float64(count)
+		cost := penalty.Info.Function(curr, old1, old2, old3, modCurr, mod1, mod2, mod3, penalty.Info.Cost) * float64(count)
 		total += cost
 		if detailed {
 			penalties[i].Total += cost
@@ -305,6 +333,15 @@ func getKey(quartad Quartad, reverseIndex int, runesToKeyPhysicalKeyInfoMap map[
 	if index <= 0 || reverseIndex < 0 {
 		return nil
 	}
-	r := rune(quartad.GetRune(index))
+	r := quartad.GetRune(index)
 	return runesToKeyPhysicalKeyInfoMap[r]
+}
+
+func getModifier(quartad Quartad, reverseIndex int, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo) *KeyPhysicalInfo {
+	index := quartad.Len() - (reverseIndex + 1)
+	if index <= 0 || reverseIndex < 0 {
+		return nil
+	}
+	m := rune(quartad.GetModifier(index))
+	return runesToKeyPhysicalKeyInfoMap[m]
 }

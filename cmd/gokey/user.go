@@ -45,6 +45,7 @@ type User struct {
 		InwardRoll           float64 `json:"inward_roll"`
 		ScissorMotion        float64 `json:"scissor_motion"`
 		RowChangeInRoll      float64 `json:"row_change_in_roll"`
+		SameFingerModifier   float64 `json:"same_finger_modifier"`
 	} `json:"penalties"`
 }
 
@@ -63,7 +64,11 @@ func ReadUser(filename string) (User, error) {
 	}
 
 	// Get the required runes
-	profile.Required = []rune(profile.RawRequired)
+	profile.Required = make([]rune, 0)
+	for _, c := range profile.RawRequired {
+		r := runeFromString(fmt.Sprintf("%c", c))
+		profile.Required = append(profile.Required, r)
+	}
 
 	// Now read their locale
 	profile.Locale, err = LoadUserLocale(profile.RawLocale)
