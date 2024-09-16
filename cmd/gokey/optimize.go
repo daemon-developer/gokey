@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"os/signal"
 	"sort"
+	"sync"
+	"syscall"
 	"time"
 )
 
@@ -13,7 +17,7 @@ type BestLayoutEntry struct {
 	Penalty float64
 }
 
-func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, iterations int, topLayouts int, numSwaps int) {
+func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, iterations int, topLayouts int, numSwaps int, parallelism int) {
 	initLayout := layout.Duplicate()
 	penaltyRules := InitPenaltyRules(user)
 
@@ -45,42 +49,89 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, ite
 	startTime := time.Now()
 
 	start, end := sa.GetSimulationRange()
-	for i := start; i < end; i++ {
-		if i%100 == 0 {
-			PrintProgress(startTime, i, end, acceptedLayout, debug, acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
+
+	// Create channels to handle results
+	type CalcPenaltyRunResult struct {
+		index   int
+		layout  Layout
+		penalty float64
+		results []KeyPenaltyResult
+	}
+
+	penaltyChan := make(chan CalcPenaltyRunResult, parallelism)
+	var wg sync.WaitGroup
+
+	// Set up signal handling for graceful shutdown on Ctrl+C
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-quit
+		fmt.Println("\nReceived interrupt signal, shutting down...")
+		// Don't close penaltyChan yet, just exit after ongoing work is done
+		os.Exit(1) // Gracefully exit the program         // Gracefully exit the program
+	}()
+
+	for i := start; i < end; i += parallelism {
+		// Launch parallelism number of goroutines
+		for j := 0; j < parallelism && i+j < end; j++ {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+
+				// Shuffle the layout and calculate penalty
+				currLayout := acceptedLayout.Duplicate()
+				currLayout.Shuffle(rand.Intn(numSwaps) + 1)
+				runesToKeyPhysicalKeyInfoMap := currLayout.mapRunesToPhysicalKeyInfo()
+
+				// Calculate penalty
+				currPenalty, currPenaltyResults := CalculatePenalty(quartadInfo.Quartads, currLayout, runesToKeyPhysicalKeyInfoMap, &penaltyRules, debug)
+
+				// Send the result back via channel
+				penaltyChan <- CalcPenaltyRunResult{
+					index:   idx,
+					layout:  currLayout,
+					penalty: currPenalty,
+					results: currPenaltyResults,
+				}
+			}(i + j)
 		}
 
-		// Create a new layout by shuffling the accepted layout
-		currLayout := acceptedLayout.Duplicate()
-		currLayout.Shuffle(rand.Intn(numSwaps) + 1)
-		runesToKeyPhysicalKeyInfoMap := currLayout.mapRunesToPhysicalKeyInfo()
+		// Start a goroutine that closes the penalty channel when all work is done
+		go func() {
+			wg.Wait()          // Wait for all goroutines to finish
+			close(penaltyChan) // Close the channel after all goroutines are done
+		}()
 
-		// Calculate the penalty for the new layout
-		currPenalty, currPenaltyResults := CalculatePenalty(quartadInfo.Quartads, currLayout, runesToKeyPhysicalKeyInfoMap, &penaltyRules, debug)
+		for result := range penaltyChan {
+			// Decide whether to accept the new layout
+			if sa.AcceptTransition(result.penalty-acceptedPenalty, result.index) {
+				acceptedLayout = result.layout.Duplicate()
+				acceptedPenalty = result.penalty
+				acceptedPenaltyResults = result.results
+				if acceptedPenalty > watermarkPenalty {
+					watermarkPenalty = acceptedPenalty
+				}
 
-		// Decide whether to accept the new layout
-		if sa.AcceptTransition(currPenalty-acceptedPenalty, i) {
-			acceptedLayout = currLayout.Duplicate()
-			acceptedPenalty = currPenalty
-			acceptedPenaltyResults = currPenaltyResults
-			if acceptedPenalty > watermarkPenalty {
-				watermarkPenalty = acceptedPenalty
+				PrintProgress(startTime, result.index, end, acceptedLayout, debug, acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
+
+				// Add the new layout to bestLayouts and maintain top layouts
+				bestLayouts = append(bestLayouts, BestLayoutEntry{Layout: result.layout.Duplicate(), Penalty: result.penalty})
+
+				// Sort bestLayouts by penalty (lowest first)
+				sort.Slice(bestLayouts, func(i, j int) bool {
+					return bestLayouts[i].Penalty < bestLayouts[j].Penalty
+				})
+
+				// Keep only the top layouts
+				if len(bestLayouts) > topLayouts {
+					bestLayouts = bestLayouts[:topLayouts]
+				}
 			}
+		}
 
+		if i%100 == 0 {
 			PrintProgress(startTime, i, end, acceptedLayout, debug, acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
-
-			// Add the new layout to bestLayouts and maintain top layouts
-			bestLayouts = append(bestLayouts, BestLayoutEntry{Layout: currLayout.Duplicate(), Penalty: currPenalty})
-
-			// Sort bestLayouts by penalty (lowest first)
-			sort.Slice(bestLayouts, func(i, j int) bool {
-				return bestLayouts[i].Penalty < bestLayouts[j].Penalty
-			})
-
-			// Keep only the top layouts
-			if len(bestLayouts) > topLayouts {
-				bestLayouts = bestLayouts[:topLayouts]
-			}
 		}
 	}
 

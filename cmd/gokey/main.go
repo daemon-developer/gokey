@@ -8,9 +8,11 @@ import (
 )
 
 var (
-	optIterations int
-	optDebug      bool
-	rootCmd       = &cobra.Command{
+	optIterations  int
+	optSwaps       int
+	optDebug       bool
+	optParallelism int
+	rootCmd        = &cobra.Command{
 		Use:   "gokey [username]",
 		Short: "Generate a personalized keyboard layout.",
 		Long:  `Generate a personalized keyboard layout.`,
@@ -21,7 +23,8 @@ var (
 
 func init() {
 	rootCmd.Flags().IntVarP(&optIterations, "iterations", "i", 10000, "Number of iterations")
-	rootCmd.Flags().IntVarP(&optIterations, "swaps", "s", 3, "Number key swaps per iteration")
+	rootCmd.Flags().IntVarP(&optSwaps, "swaps", "s", 3, "Number key swaps per iteration")
+	rootCmd.Flags().IntVarP(&optParallelism, "parallelism", "p", 1, "Number of parallel processes")
 	rootCmd.Flags().BoolVarP(&optDebug, "debug", "d", false, "Enable debug mode")
 }
 
@@ -52,5 +55,5 @@ func run(cmd *cobra.Command, args []string) {
 
 	fmt.Println(user.Layout.StringWithCosts())
 
-	Optimize(quartadInfo, user.Layout, user, optDebug, optIterations, 1, 3)
+	Optimize(quartadInfo, user.Layout, user, optDebug, optIterations, 1, optSwaps, optParallelism)
 }
