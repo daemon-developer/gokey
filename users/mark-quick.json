@@ -2,10 +2,8 @@
   "name": "Mark Allen",
   "keyboard": "zsa-voyager",
   "corpus": [
-    "corpus/aliceinwonderland.txt",
     "corpus/golang.txt",
-    "corpus/down_and_out_in_the_magic_kingdom.txt",
-    "corpus/cpp.txt"
+    "corpus/down_and_out_in_the_magic_kingdom.txt"
   ],
   "locale": "iso-uk-mac",
   "required": "^abcedfghijklmnopqrstuvwxyz \n\t",

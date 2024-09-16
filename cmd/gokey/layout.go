@@ -6,7 +6,6 @@ import (
 	"math"
 	"os"
 	"sort"
-	"strings"
 	"unicode"
 )
 
@@ -565,6 +564,7 @@ func (layout *Layout) StringWithCosts() string {
 	return layout.stringInternal(true)
 }
 
+/*
 func (layout *Layout) stringInternal(costs bool) string {
 	var sb strings.Builder
 
@@ -619,3 +619,4 @@ func visualizeRow(row []KeyPhysicalInfo, costs bool) string {
 
 	return strings.Join(keys, " ")
 }
+*/

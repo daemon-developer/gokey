@@ -46,6 +46,8 @@ type User struct {
 		ScissorMotion        float64 `json:"scissor_motion"`
 		RowChangeInRoll      float64 `json:"row_change_in_roll"`
 		SameFingerModifier   float64 `json:"same_finger_modifier"`
+		DiagonalModifier     float64 `json:"diagonal_modifier"`
+		ModifierStretch      float64 `json:"modifier_stretch"`
 	} `json:"penalties"`
 }
 

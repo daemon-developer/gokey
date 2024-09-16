@@ -2,18 +2,20 @@ package main
 
 // KeyPenalty defines a penalty rule.
 type KeyPenalty struct {
-	Name     string
-	Function PenaltyFunc
-	Cost     float64
+	Name             string
+	Function         PenaltyFunc
+	Cost             float64
+	WatermarkPenalty float64
 }
 
 type PenaltyFunc func(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64
 
 type KeyPenaltyResult struct {
-	Name     string
-	Total    float64
-	HighKeys map[Quartad]float64
-	Info     *KeyPenalty
+	Name             string
+	Total            float64
+	WatermarkPenalty float64
+	HighKeys         map[Quartad]float64
+	Info             *KeyPenalty
 }
 
 // InitPenaltyRules initializes the penalty rules.
@@ -34,6 +36,8 @@ func InitPenaltyRules(user User) []KeyPenalty {
 		{Name: "Row change in roll", Function: calcRowChangeInRollPenalty, Cost: user.Penalties.RowChangeInRoll},
 		{Name: "Base modifier", Function: calcBaseModifierPenalty, Cost: 1.0},
 		{Name: "Same finger modifier", Function: calcSameFingerModifierPenalty, Cost: user.Penalties.SameFingerModifier},
+		{Name: "Diagonal modifier", Function: calcDiagonalModifierPenalty, Cost: user.Penalties.DiagonalModifier},
+		{Name: "Modifier stretch", Function: calcModifierStretchPenalty, Cost: user.Penalties.ModifierStretch},
 	}
 }
 
@@ -245,12 +249,44 @@ func calcSameFingerModifierPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, 
 	return 0.0
 }
 
-// CalculatePenalty calculates the total penalty for a layout and the given quartads.
-func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties []KeyPenalty, detailed bool) (float64, []KeyPenaltyResult) {
-	var totalPenalty float64
-	results := make([]KeyPenaltyResult, len(penalties))
+func calcDiagonalModifierPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
+	if curr == nil || modCurr == nil {
+		return 0.0
+	}
+	if curr.hand == modCurr.hand {
+		vDelta := AbsI(modCurr.row - curr.row)
+		if vDelta > 2 {
+			return cost
+		}
+	}
+	return 0.0
+}
 
-	for i, penalty := range penalties {
+func calcModifierStretchPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
+	if curr == nil || modCurr == nil {
+		return 0.0
+	}
+	if curr.hand == modCurr.hand {
+		// Check if the current key is pressed by the pinky and a modifier by the index, or vice versa
+		if (curr.associatedFinger == Pinkie && modCurr.associatedFinger == Index) ||
+			(curr.associatedFinger == Index && modCurr.associatedFinger == Pinkie) {
+			// Check if both are away from their home positions
+			if (curr.horzDeltaToHome != 0 || curr.vertDeltaToHome != 0) &&
+				(modCurr.horzDeltaToHome != 0 || modCurr.vertDeltaToHome != 0) {
+				return cost
+			}
+
+		}
+	}
+	return 0.0
+}
+
+// CalculatePenalty calculates the total penalty for a layout and the given quartads.
+func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties *[]KeyPenalty, detailed bool) (float64, []KeyPenaltyResult) {
+	var totalPenalty float64
+	results := make([]KeyPenaltyResult, len(*penalties))
+
+	for i, penalty := range *penalties {
 		results[i] = KeyPenaltyResult{
 			Name:     penalty.Name,
 			Total:    0.0,
@@ -262,6 +298,21 @@ func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKey
 	for quartad, count := range quartads {
 		penalty := penalize(quartad, count, layout, runesToKeyPhysicalKeyInfoMap, results, detailed)
 		totalPenalty += penalty
+	}
+
+	if detailed {
+		for i, result := range results {
+			if result.Info.Cost > 0 {
+				if (*penalties)[i].WatermarkPenalty < result.Total {
+					(*penalties)[i].WatermarkPenalty = result.Total
+				}
+			} else {
+				if (*penalties)[i].WatermarkPenalty > result.Total {
+					(*penalties)[i].WatermarkPenalty = result.Total
+				}
+			}
+			results[i].WatermarkPenalty = (*penalties)[i].WatermarkPenalty
+		}
 	}
 
 	return totalPenalty, results
@@ -311,16 +362,18 @@ func penalize(quartad Quartad, count int, layout Layout, runesToKeyPhysicalKeyIn
 	old2 := getKey(quartad, 2, runesToKeyPhysicalKeyInfoMap)
 	old3 := getKey(quartad, 3, runesToKeyPhysicalKeyInfoMap)
 	modCurr := getModifier(quartad, 0, runesToKeyPhysicalKeyInfoMap)
-	mod1 := getModifier(quartad, 0, runesToKeyPhysicalKeyInfoMap)
-	mod2 := getModifier(quartad, 0, runesToKeyPhysicalKeyInfoMap)
-	mod3 := getModifier(quartad, 0, runesToKeyPhysicalKeyInfoMap)
+	mod1 := getModifier(quartad, 1, runesToKeyPhysicalKeyInfoMap)
+	mod2 := getModifier(quartad, 2, runesToKeyPhysicalKeyInfoMap)
+	mod3 := getModifier(quartad, 3, runesToKeyPhysicalKeyInfoMap)
 
 	for i, penalty := range penalties {
-		cost := penalty.Info.Function(curr, old1, old2, old3, modCurr, mod1, mod2, mod3, penalty.Info.Cost) * float64(count)
-		total += cost
-		if detailed {
-			penalties[i].Total += cost
-			penalties[i].HighKeys[quartad] += cost
+		if penalty.Info.Cost != 0 {
+			cost := penalty.Info.Function(curr, old1, old2, old3, modCurr, mod1, mod2, mod3, penalty.Info.Cost) * float64(count)
+			total += cost
+			if detailed {
+				penalties[i].Total += cost
+				penalties[i].HighKeys[quartad] += cost
+			}
 		}
 	}
 
@@ -330,7 +383,7 @@ func penalize(quartad Quartad, count int, layout Layout, runesToKeyPhysicalKeyIn
 // getKey returns the key press information from the layout.
 func getKey(quartad Quartad, reverseIndex int, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo) *KeyPhysicalInfo {
 	index := quartad.Len() - (reverseIndex + 1)
-	if index <= 0 || reverseIndex < 0 {
+	if index < 0 || reverseIndex < 0 {
 		return nil
 	}
 	r := quartad.GetRune(index)
