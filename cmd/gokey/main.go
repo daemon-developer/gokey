@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"runtime"
 
@@ -45,12 +44,6 @@ func run(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic(err)
 	}
-
-	x := len(user.Layout.GetSwappableKeys())
-	iterations := float64(x*x) * math.Log(float64(x))
-	fmt.Printf("Number of swappable keys: %d\n", x)
-	fmt.Printf("Number of recommended iterations: %d\n", int(iterations))
-	fmt.Printf("Number of recommended swaps: %d\n", x/10)
 
 	quartadInfo, err := GetQuartadList(user.Corpus, user)
 	if err != nil {
