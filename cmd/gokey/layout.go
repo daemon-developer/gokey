@@ -343,7 +343,7 @@ func (layout *Layout) GetSwappableKeys() []*Key {
 	return keys
 }
 
-func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[rune]int {
+func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map[rune]int, map[rune]int) {
 	orderedFoundRunes := sortMapByValueDescToArray(foundRunes)
 	for _, r := range orderedFoundRunes {
 		fmt.Printf("Rune '%c' used %d times\n", RuneDisplayVersion(r), foundRunes[r])
@@ -353,6 +353,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 	// Before we start assigning keys, we'll run over the current layout and mark that certain runes are
 	// already assigned
 	assignedRunes := make(map[rune]int)
+	assignedShiftedRunes := make(map[rune]int)
 	alreadyAssigned := make(map[rune]bool)
 	for _, keyInfo := range orderedKeyInfos {
 		if keyInfo.key.UnshiftedIsFree == false {
@@ -403,6 +404,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 				alreadyAssigned[lowerAlpha] = true
 				assignedRunes[lowerAlpha] = foundRunes[lowerAlpha]
 				assignedRunes[upperAlpha] = foundRunes[upperAlpha]
+				assignedShiftedRunes[upperAlpha] = foundRunes[upperAlpha]
 			}
 		} else {
 			// Handle symbol assignment
@@ -417,6 +419,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 					keyInfo.key.ShiftedIsFree = false
 					alreadyAssigned[runeToAssign] = true
 					assignedRunes[runeToAssign] = foundRunes[runeToAssign]
+					assignedShiftedRunes[runeToAssign] = foundRunes[runeToAssign]
 				}
 			} else {
 				if keyInfo.key.UnshiftedIsFree == false {
@@ -435,6 +438,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 					alreadyAssigned[shiftedRune] = true
 					assignedRunes[runeToAssign] = foundRunes[runeToAssign]
 					assignedRunes[shiftedRune] = foundRunes[shiftedRune]
+					assignedShiftedRunes[shiftedRune] = foundRunes[shiftedRune]
 				} else if unshiftedRune, exists := user.Locale.shiftedToUnshifted[runeToAssign]; exists {
 					fmt.Printf("Handling '%c' & '%c' as shifted symbol\n", runeToAssign, unshiftedRune)
 					keyInfo.key.UnshiftedRune = unshiftedRune
@@ -445,6 +449,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 					alreadyAssigned[unshiftedRune] = true
 					assignedRunes[unshiftedRune] = foundRunes[unshiftedRune]
 					assignedRunes[runeToAssign] = foundRunes[runeToAssign]
+					assignedShiftedRunes[runeToAssign] = foundRunes[runeToAssign]
 				} else {
 					// Not actually symbols so will be things like ENTER or backspace
 					fmt.Printf("Handling '%c' as non-symbol\n", RuneDisplayVersion(runeToAssign))
@@ -471,7 +476,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) map[
 	fmt.Println(layout.String())
 
 	// Return the runes we have assigned to keys
-	return assignedRunes
+	return assignedRunes, assignedShiftedRunes
 }
 
 func (layout *Layout) getOrderedKeysByCost() []*KeyPhysicalInfo {

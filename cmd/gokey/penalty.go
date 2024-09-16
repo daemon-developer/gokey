@@ -12,7 +12,7 @@ type PenaltyFunc func(curr, old1, old2, old3 *KeyPhysicalInfo, cost float64) flo
 type KeyPenaltyResult struct {
 	Name     string
 	Total    float64
-	HighKeys map[string]float64
+	HighKeys map[Quartad]float64
 	Info     *KeyPenalty
 }
 
@@ -230,7 +230,7 @@ func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKey
 		results[i] = KeyPenaltyResult{
 			Name:     penalty.Name,
 			Total:    0.0,
-			HighKeys: make(map[string]float64),
+			HighKeys: make(map[Quartad]float64),
 			Info:     &penalty,
 		}
 	}
@@ -278,7 +278,7 @@ func isRollIn(currFinger, prevFinger Finger) bool {
 }
 
 // calculateQuartadPenalty calculates the penalty for a given quartad.
-func penalize(quartad string, count int, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties []KeyPenaltyResult, detailed bool) float64 {
+func penalize(quartad Quartad, count int, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties []KeyPenaltyResult, detailed bool) float64 {
 	total := 0.0
 
 	// Get current rune key press information
@@ -300,11 +300,11 @@ func penalize(quartad string, count int, layout Layout, runesToKeyPhysicalKeyInf
 }
 
 // getKey returns the key press information from the layout.
-func getKey(quartad string, reverseIndex int, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo) *KeyPhysicalInfo {
-	index := len(quartad) - (reverseIndex + 1)
+func getKey(quartad Quartad, reverseIndex int, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo) *KeyPhysicalInfo {
+	index := quartad.Len() - (reverseIndex + 1)
 	if index <= 0 || reverseIndex < 0 {
 		return nil
 	}
-	r := rune(quartad[index])
+	r := rune(quartad.GetRune(index))
 	return runesToKeyPhysicalKeyInfoMap[r]
 }
