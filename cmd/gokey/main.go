@@ -57,5 +57,5 @@ func run(cmd *cobra.Command, args []string) {
 
 	fmt.Println(user.Layout.StringWithCosts())
 
-	Optimize(quartadInfo, user.Layout, user, optIterations, 1, optSwaps)
+	Optimize(quartadInfo, user.Layout, user, optIterations, optSwaps)
 }
