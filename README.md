@@ -21,3 +21,7 @@ Windows:
 The above example will concatenate all the .go files into golang.txt
 
 It's important to consider the relative sizes of your corpora, as they directly influence the quartads used for analysis. For example, if you want to lean more towards Go coding patterns rather than general English prose, ensure you have a larger volume of Go code in your corpus. You can compare the file sizes of your different corpora to gauge their relative proportions.
+
+### References
+
+[1] https://github.com/xsznix/keygen

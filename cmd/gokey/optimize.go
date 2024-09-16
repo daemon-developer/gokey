@@ -61,6 +61,11 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, iterations int,
 		// Calculate the penalty for the new layout
 		currPenalty, currPenaltyResults := CalculatePenalty(quartadInfo.Quartads, currLayout, runesToKeyPhysicalKeyInfoMap, &penaltyRules)
 
+		// Check if this is the best layout so far
+		if currPenalty > bestLayout.Penalty {
+			bestLayout = BestLayoutEntry{Layout: currLayout.Duplicate(), Penalty: currPenalty}
+		}
+
 		// Decide whether to accept the new layout
 		if sa.AcceptTransition(currPenalty-acceptedPenalty, i) {
 			acceptedLayout = currLayout.Duplicate()
@@ -69,9 +74,6 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, iterations int,
 			if acceptedPenalty > watermarkPenalty {
 				watermarkPenalty = acceptedPenalty
 			}
-
-			// Add the new layout to bestLayouts and maintain top layouts
-			bestLayout = BestLayoutEntry{Layout: acceptedLayout, Penalty: acceptedPenalty}
 
 			cursor.StartOfLineUp(outputRows)
 			PrintProgress(startTime, i, end, acceptedLayout, acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)

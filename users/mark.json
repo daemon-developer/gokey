@@ -1,7 +1,12 @@
 {
   "name": "Mark Allen",
   "keyboard": "zsa-voyager",
-  "corpus": ["corpus/aliceinwonderland.txt"],
+  "corpus": [
+    "corpus/aliceinwonderland.txt",
+    "corpus/golang.txt",
+    "corpus/down_and_out_in_the_magic_kingdom.txt",
+    "corpus/rust.txt"
+  ],
   "locale": "iso-uk-mac",
   "required": "^abcedfghijklmnopqrstuvwxyz \n\t",
   "left": {
@@ -20,19 +25,19 @@
   },
   "penalties": {
     "sfb": 5.0,
-    "vertical_finger_travel": 3.0,
-    "long_sfb": 10.0,
-    "lateral_stretch": 5.0,
+    "vertical_finger_travel": 5.0,
+    "long_sfb": 8.0,
+    "lateral_stretch": 7.0,
     "pinky_ring_stretch": 15.0,
-    "roll_reversal": 6.0,
-    "hand_repetition": 1.0,
+    "roll_reversal": 4.0,
+    "hand_repetition": 2.0,
     "hand_alternation": -0.5,
     "outward_roll": -0.5,
-    "inward_roll": -1.0,
-    "scissor_motion": 3.0,
-    "row_change_in_roll": 10.0,
+    "inward_roll": -3.0,
+    "scissor_motion": 6.0,
+    "row_change_in_roll": 4.0,
     "same_finger_modifier": 20.0,
-    "diagonal_modifier": 5.0,
-    "modifier_stretch": 5.0
+    "diagonal_modifier": 8.0,
+    "modifier_stretch": 10.0
   }
 }

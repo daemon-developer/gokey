@@ -17,8 +17,8 @@ type SimulatedAnnealing struct {
 // NewSimulatedAnnealing creates a new SimulatedAnnealing instance with default parameters
 func NewSimulatedAnnealing(iterations int) *SimulatedAnnealing {
 	sa := &SimulatedAnnealing{
-		T0: 1.5,
-		K:  10.0,
+		T0: 10.0,                        //1.5,
+		K:  float64(iterations) / 10000, //10.0,
 		P0: 1.0,
 		N:  iterations,
 	}
