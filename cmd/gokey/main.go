@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"runtime"
+
+	"github.com/spf13/cobra"
 )
 
 var (
 	optIterations int
-	optDebug      bool
+	optDebug      int
+	optSwaps      int
 	rootCmd       = &cobra.Command{
 		Use:   "gokey [username]",
 		Short: "Generate a personalized keyboard layout.",
@@ -21,8 +23,8 @@ var (
 
 func init() {
 	rootCmd.Flags().IntVarP(&optIterations, "iterations", "i", 10000, "Number of iterations")
-	rootCmd.Flags().IntVarP(&optIterations, "swaps", "s", 3, "Number key swaps per iteration")
-	rootCmd.Flags().BoolVarP(&optDebug, "debug", "d", false, "Enable debug mode")
+	rootCmd.Flags().IntVarP(&optSwaps, "swaps", "s", 3, "Number key swaps per iteration")
+	rootCmd.Flags().IntVarP(&optDebug, "debug", "d", 0, "Debug level (0-2)")
 }
 
 func main() {
@@ -32,6 +34,7 @@ func main() {
 		os.Exit(1)
 	}
 }
+
 func run(cmd *cobra.Command, args []string) {
 	username := args[0]
 
@@ -52,5 +55,5 @@ func run(cmd *cobra.Command, args []string) {
 
 	fmt.Println(user.Layout.StringWithCosts())
 
-	Optimize(quartadInfo, user.Layout, user, optDebug, optIterations, 1, 3)
+	Optimize(quartadInfo, user.Layout, user, optDebug, optIterations, 1, optSwaps)
 }

@@ -112,7 +112,6 @@ func calcLateralStretchPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3
 	}
 
 	return 0.0
-
 }
 
 func calcPinkyRingStretchPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
@@ -275,14 +274,13 @@ func calcModifierStretchPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod
 				(modCurr.horzDeltaToHome != 0 || modCurr.vertDeltaToHome != 0) {
 				return cost
 			}
-
 		}
 	}
 	return 0.0
 }
 
 // CalculatePenalty calculates the total penalty for a layout and the given quartads.
-func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties *[]KeyPenalty, detailed bool) (float64, []KeyPenaltyResult) {
+func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties *[]KeyPenalty, debug int) (float64, []KeyPenaltyResult) {
 	var totalPenalty float64
 	results := make([]KeyPenaltyResult, len(*penalties))
 
@@ -296,11 +294,11 @@ func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKey
 	}
 
 	for quartad, count := range quartads {
-		penalty := penalize(quartad, count, layout, runesToKeyPhysicalKeyInfoMap, results, detailed)
+		penalty := penalize(quartad, count, runesToKeyPhysicalKeyInfoMap, results, debug)
 		totalPenalty += penalty
 	}
 
-	if detailed {
+	if debug > 0 {
 		for i, result := range results {
 			if result.Info.Cost > 0 {
 				if (*penalties)[i].WatermarkPenalty < result.Total {
@@ -353,7 +351,7 @@ func isRollIn(currFinger, prevFinger Finger) bool {
 }
 
 // calculateQuartadPenalty calculates the penalty for a given quartad.
-func penalize(quartad Quartad, count int, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties []KeyPenaltyResult, detailed bool) float64 {
+func penalize(quartad Quartad, count int, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties []KeyPenaltyResult, debug int) float64 {
 	total := 0.0
 
 	// Get current rune key press information
@@ -370,8 +368,10 @@ func penalize(quartad Quartad, count int, layout Layout, runesToKeyPhysicalKeyIn
 		if penalty.Info.Cost != 0 {
 			cost := penalty.Info.Function(curr, old1, old2, old3, modCurr, mod1, mod2, mod3, penalty.Info.Cost) * float64(count)
 			total += cost
-			if detailed {
+			if debug > 0 {
 				penalties[i].Total += cost
+				if debug > 2 {
+				}
 				penalties[i].HighKeys[quartad] += cost
 			}
 		}

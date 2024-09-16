@@ -13,11 +13,11 @@ type BestLayoutEntry struct {
 	Penalty float64
 }
 
-func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, iterations int, topLayouts int, numSwaps int) {
+func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug int, iterations int, topLayouts int, numSwaps int) {
 	initLayout := layout.Duplicate()
 	penaltyRules := InitPenaltyRules(user)
 
-	if debug {
+	if debug > 0 {
 		fmt.Println("Initial layout:")
 		fmt.Print(initLayout.String())
 	}
@@ -25,10 +25,7 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, ite
 	runesToKeyPhysicalKeyInfoMap := initLayout.mapRunesToPhysicalKeyInfo()
 	initialPenalty, initialResults := CalculatePenalty(quartadInfo.Quartads, initLayout, runesToKeyPhysicalKeyInfoMap, &penaltyRules, debug)
 	watermarkPenalty := initialPenalty
-	if debug {
-		fmt.Println()
-		PrintPenaltyResults(initialPenalty, watermarkPenalty, initialResults)
-	}
+	PrintPenaltyResults(initialPenalty, watermarkPenalty, initialResults, debug)
 
 	// Initialize simulated annealing
 	sa := NewSimulatedAnnealing(iterations)
@@ -94,11 +91,11 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug bool, ite
 		if finalPenalty > watermarkPenalty {
 			watermarkPenalty = finalPenalty
 		}
-		PrintPenaltyResults(finalPenalty, watermarkPenalty, finalResults)
+		PrintPenaltyResults(finalPenalty, watermarkPenalty, finalResults, debug)
 	}
 }
 
-func PrintProgress(startTime time.Time, i int, end int, acceptedLayout Layout, debug bool, acceptedPenalty float64, watermarkPenalty float64, acceptedPenaltyResults []KeyPenaltyResult) {
+func PrintProgress(startTime time.Time, i int, end int, acceptedLayout Layout, debug int, acceptedPenalty float64, watermarkPenalty float64, acceptedPenaltyResults []KeyPenaltyResult) {
 	// Calculate elapsed time and ETA
 	elapsed := time.Since(startTime)
 	progress := float64(i) / float64(end-1)
@@ -106,24 +103,23 @@ func PrintProgress(startTime time.Time, i int, end int, acceptedLayout Layout, d
 
 	fmt.Println()
 	fmt.Println(acceptedLayout.String())
-	fmt.Printf("  Iteration %d/%d (%.3g%% complete) | ETA: %s\n", i, end-1, progress*100.0, eta.Round(time.Second))
 
-	if debug {
-		fmt.Println()
-		PrintPenaltyResults(acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
-	}
+	PrintPenaltyResults(acceptedPenalty, watermarkPenalty, acceptedPenaltyResults, debug)
+	fmt.Printf("  Iteration %d/%d (%.3g%% complete) | ETA: %s\n", i, end-1, progress*100.0, eta.Round(time.Second))
 }
 
-func PrintPenaltyResults(current, watermark float64, results []KeyPenaltyResult) {
+func PrintPenaltyResults(current, watermark float64, results []KeyPenaltyResult, debug int) {
 	penaltyPercentage := (current / watermark) * 100.0
 	fmt.Printf("  %30s: %s %.3g%%\n", fmt.Sprintf("Layout penalty: %.0f", current), generateProgressBar(penaltyPercentage, 16), penaltyPercentage)
-	fmt.Println()
-	for _, r := range results {
-		percentOfHighest := r.Total / r.WatermarkPenalty * 100.0
-		if r.Info.Cost < 0 {
-			percentOfHighest = math.Abs(r.WatermarkPenalty-r.Total) / math.Abs(r.WatermarkPenalty) * 100.0
+	if debug > 0 {
+		fmt.Println()
+		for _, r := range results {
+			percentOfHighest := r.Total / r.WatermarkPenalty * 100.0
+			if r.Info.Cost < 0 {
+				percentOfHighest = math.Abs(r.WatermarkPenalty-r.Total) / math.Abs(r.WatermarkPenalty) * 100.0
+			}
+			fmt.Printf("  %30s: %s %.3g%%\n", r.Name, generateProgressBar(percentOfHighest, 16), percentOfHighest)
 		}
-		fmt.Printf("  %30s: %s %.3g%%\n", r.Name, generateProgressBar(percentOfHighest, 16), percentOfHighest)
 	}
 }
 

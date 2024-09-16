@@ -357,12 +357,12 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 	assignedShiftedRunes := make(map[rune]int)
 	alreadyAssigned := make(map[rune]bool)
 	for _, keyInfo := range orderedKeyInfos {
-		if keyInfo.key.UnshiftedIsFree == false {
+		if !keyInfo.key.UnshiftedIsFree {
 			r := keyInfo.key.UnshiftedRune
 			alreadyAssigned[r] = true
 			assignedRunes[r] = foundRunes[r]
 		}
-		if keyInfo.key.ShiftedIsFree == false {
+		if !keyInfo.key.ShiftedIsFree {
 			r := keyInfo.key.ShiftedRune
 			alreadyAssigned[r] = true
 			assignedRunes[r] = foundRunes[r]
@@ -388,13 +388,13 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 		}
 
 		if unicode.IsLetter(runeToAssign) {
-			if keyInfo.key.UnshiftedIsFree == false {
+			if !keyInfo.key.UnshiftedIsFree {
 				k++
 				fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
 				continue
 			}
 			lowerAlpha := unicode.ToLower(runeToAssign)
-			if alreadyAssigned[lowerAlpha] == false {
+			if !alreadyAssigned[lowerAlpha] {
 				// If it's a letter, assign lower and upper case
 				upperAlpha := unicode.ToUpper(runeToAssign)
 				fmt.Printf("Handling '%c' & '%c' as letter\n", upperAlpha, lowerAlpha)
@@ -423,7 +423,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 					assignedShiftedRunes[runeToAssign] = foundRunes[runeToAssign]
 				}
 			} else {
-				if keyInfo.key.UnshiftedIsFree == false {
+				if !keyInfo.key.UnshiftedIsFree {
 					k++
 					fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
 					continue
@@ -465,7 +465,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 		}
 
 		i++
-		if keyInfo.key.UnshiftedIsFree == false {
+		if !keyInfo.key.UnshiftedIsFree {
 			k++
 		}
 	}
