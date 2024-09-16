@@ -74,14 +74,15 @@ func PrepareQuartadList(s string, user User) QuartadInfo {
 		} else {
 			foundRunes[r] = 0
 		}
-
 	}
 
 	// Count the frequency of all the runes
 	for i := 0; i < n; i++ {
 		if isTypeableRune(runes[i]) {
-			if _, ok := foundRunes[runes[i]]; !ok {
-				fmt.Printf("Found rune '%c'\n", RuneDisplayVersion(runes[i]))
+			if optDebug > 1 {
+				if _, ok := foundRunes[runes[i]]; !ok {
+					fmt.Printf("Found rune '%c'\n", RuneDisplayVersion(runes[i]))
+				}
 			}
 			foundRunes[runes[i]]++
 		}
@@ -142,13 +143,17 @@ func GetQuartadList(referenceTextFiles []string, user User) (QuartadInfo, error)
 
 	// Process the text
 	quartadInfo := PrepareQuartadList(sb.String(), user)
-	fmt.Printf("Using %d unique runes\n", len(quartadInfo.RunesOnKeyboard))
 
-	// Sort and display top 50 quartads
-	sortedQuartads := SortQuartadsMapByKeyDesc(quartadInfo.Quartads)
-	fmt.Println("Top 50 Quartads:")
-	for i := 0; i < 50 && i < len(sortedQuartads); i++ {
-		fmt.Printf("%q: %d\n", sortedQuartads[i].Key.String(), sortedQuartads[i].Value)
+	// Print debug information
+	if optDebug > 1 {
+		fmt.Printf("Using %d unique runes\n", len(quartadInfo.RunesOnKeyboard))
+
+		// Sort and display top 50 quartads
+		sortedQuartads := SortQuartadsMapByKeyDesc(quartadInfo.Quartads)
+		fmt.Println("Top 50 Quartads:")
+		for i := 0; i < 50 && i < len(sortedQuartads); i++ {
+			fmt.Printf("%q: %d\n", sortedQuartads[i].Key.String(), sortedQuartads[i].Value)
+		}
 	}
 
 	return quartadInfo, nil
@@ -208,6 +213,7 @@ func (q Quartad) Cmp(other Quartad) int {
 	// If length, runes, and modifiers are all the same, return 0 (equal)
 	return 0
 }
+
 func SortQuartadsMapByKeyDesc(m map[Quartad]int) []struct {
 	Key   Quartad
 	Value int

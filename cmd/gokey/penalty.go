@@ -280,7 +280,7 @@ func calcModifierStretchPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod
 }
 
 // CalculatePenalty calculates the total penalty for a layout and the given quartads.
-func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties *[]KeyPenalty, debug int) (float64, []KeyPenaltyResult) {
+func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties *[]KeyPenalty) (float64, []KeyPenaltyResult) {
 	var totalPenalty float64
 	results := make([]KeyPenaltyResult, len(*penalties))
 
@@ -294,11 +294,11 @@ func CalculatePenalty(quartads QuartadList, layout Layout, runesToKeyPhysicalKey
 	}
 
 	for quartad, count := range quartads {
-		penalty := penalize(quartad, count, runesToKeyPhysicalKeyInfoMap, results, debug)
+		penalty := penalize(quartad, count, runesToKeyPhysicalKeyInfoMap, results)
 		totalPenalty += penalty
 	}
 
-	if debug > 0 {
+	if optDebug > 0 {
 		for i, result := range results {
 			if result.Info.Cost > 0 {
 				if (*penalties)[i].WatermarkPenalty < result.Total {
@@ -351,7 +351,7 @@ func isRollIn(currFinger, prevFinger Finger) bool {
 }
 
 // calculateQuartadPenalty calculates the penalty for a given quartad.
-func penalize(quartad Quartad, count int, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties []KeyPenaltyResult, debug int) float64 {
+func penalize(quartad Quartad, count int, runesToKeyPhysicalKeyInfoMap map[rune]*KeyPhysicalInfo, penalties []KeyPenaltyResult) float64 {
 	total := 0.0
 
 	// Get current rune key press information
@@ -368,9 +368,9 @@ func penalize(quartad Quartad, count int, runesToKeyPhysicalKeyInfoMap map[rune]
 		if penalty.Info.Cost != 0 {
 			cost := penalty.Info.Function(curr, old1, old2, old3, modCurr, mod1, mod2, mod3, penalty.Info.Cost) * float64(count)
 			total += cost
-			if debug > 0 {
+			if optDebug > 0 {
 				penalties[i].Total += cost
-				if debug > 2 {
+				if optDebug > 2 {
 				}
 				penalties[i].HighKeys[quartad] += cost
 			}

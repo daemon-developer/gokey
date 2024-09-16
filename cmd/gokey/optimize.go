@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"sort"
 	"time"
+
+	"atomicgo.dev/cursor"
 )
 
 type BestLayoutEntry struct {
@@ -13,19 +15,26 @@ type BestLayoutEntry struct {
 	Penalty float64
 }
 
-func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug int, iterations int, topLayouts int, numSwaps int) {
+func Optimize(quartadInfo QuartadInfo, layout Layout, user User, iterations int, topLayouts int, numSwaps int) {
+	// Capture the start time for ETA calculation
+	startTime := time.Now()
+
 	initLayout := layout.Duplicate()
 	penaltyRules := InitPenaltyRules(user)
+	outputRows := len(layout.Left.Rows) + 7
+	if optDebug > 1 {
+		outputRows += len(penaltyRules) + 1
+	}
 
-	if debug > 0 {
+	if optDebug > 0 {
 		fmt.Println("Initial layout:")
 		fmt.Print(initLayout.String())
 	}
 
 	runesToKeyPhysicalKeyInfoMap := initLayout.mapRunesToPhysicalKeyInfo()
-	initialPenalty, initialResults := CalculatePenalty(quartadInfo.Quartads, initLayout, runesToKeyPhysicalKeyInfoMap, &penaltyRules, debug)
+	initialPenalty, initialResults := CalculatePenalty(quartadInfo.Quartads, initLayout, runesToKeyPhysicalKeyInfoMap, &penaltyRules)
 	watermarkPenalty := initialPenalty
-	PrintPenaltyResults(initialPenalty, watermarkPenalty, initialResults, debug)
+	PrintProgress(startTime, 0, 1, initLayout, 1.0, 1.0, initialResults)
 
 	// Initialize simulated annealing
 	sa := NewSimulatedAnnealing(iterations)
@@ -38,13 +47,11 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug int, iter
 	acceptedPenalty := initialPenalty
 	acceptedPenaltyResults := initialResults
 
-	// Capture the start time for ETA calculation
-	startTime := time.Now()
-
 	start, end := sa.GetSimulationRange()
 	for i := start; i < end; i++ {
 		if i%100 == 0 {
-			PrintProgress(startTime, i, end, acceptedLayout, debug, acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
+			cursor.StartOfLineUp(outputRows)
+			PrintProgress(startTime, i, end, acceptedLayout, acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
 		}
 
 		// Create a new layout by shuffling the accepted layout
@@ -53,7 +60,7 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug int, iter
 		runesToKeyPhysicalKeyInfoMap := currLayout.mapRunesToPhysicalKeyInfo()
 
 		// Calculate the penalty for the new layout
-		currPenalty, currPenaltyResults := CalculatePenalty(quartadInfo.Quartads, currLayout, runesToKeyPhysicalKeyInfoMap, &penaltyRules, debug)
+		currPenalty, currPenaltyResults := CalculatePenalty(quartadInfo.Quartads, currLayout, runesToKeyPhysicalKeyInfoMap, &penaltyRules)
 
 		// Decide whether to accept the new layout
 		if sa.AcceptTransition(currPenalty-acceptedPenalty, i) {
@@ -64,7 +71,8 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug int, iter
 				watermarkPenalty = acceptedPenalty
 			}
 
-			PrintProgress(startTime, i, end, acceptedLayout, debug, acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
+			cursor.StartOfLineUp(outputRows)
+			PrintProgress(startTime, i, end, acceptedLayout, acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
 
 			// Add the new layout to bestLayouts and maintain top layouts
 			bestLayouts = append(bestLayouts, BestLayoutEntry{Layout: currLayout.Duplicate(), Penalty: currPenalty})
@@ -87,15 +95,15 @@ func Optimize(quartadInfo QuartadInfo, layout Layout, user User, debug int, iter
 		fmt.Printf("\nBest layout #%d:\n", i+1)
 		fmt.Print(entry.Layout.String())
 		fmt.Println()
-		finalPenalty, finalResults := CalculatePenalty(quartadInfo.Quartads, entry.Layout, runesToKeyPhysicalKeyInfoMap, &penaltyRules, debug)
+		finalPenalty, finalResults := CalculatePenalty(quartadInfo.Quartads, entry.Layout, runesToKeyPhysicalKeyInfoMap, &penaltyRules)
 		if finalPenalty > watermarkPenalty {
 			watermarkPenalty = finalPenalty
 		}
-		PrintPenaltyResults(finalPenalty, watermarkPenalty, finalResults, debug)
+		PrintProgress(startTime, end, end, entry.Layout, finalPenalty, watermarkPenalty, finalResults)
 	}
 }
 
-func PrintProgress(startTime time.Time, i int, end int, acceptedLayout Layout, debug int, acceptedPenalty float64, watermarkPenalty float64, acceptedPenaltyResults []KeyPenaltyResult) {
+func PrintProgress(startTime time.Time, i int, end int, acceptedLayout Layout, acceptedPenalty float64, watermarkPenalty float64, acceptedPenaltyResults []KeyPenaltyResult) {
 	// Calculate elapsed time and ETA
 	elapsed := time.Since(startTime)
 	progress := float64(i) / float64(end-1)
@@ -104,14 +112,15 @@ func PrintProgress(startTime time.Time, i int, end int, acceptedLayout Layout, d
 	fmt.Println()
 	fmt.Println(acceptedLayout.String())
 
-	PrintPenaltyResults(acceptedPenalty, watermarkPenalty, acceptedPenaltyResults, debug)
+	printPenaltyResults(acceptedPenalty, watermarkPenalty, acceptedPenaltyResults)
+	fmt.Println()
 	fmt.Printf("  Iteration %d/%d (%.3g%% complete) | ETA: %s\n", i, end-1, progress*100.0, eta.Round(time.Second))
 }
 
-func PrintPenaltyResults(current, watermark float64, results []KeyPenaltyResult, debug int) {
+func printPenaltyResults(current, watermark float64, results []KeyPenaltyResult) {
 	penaltyPercentage := (current / watermark) * 100.0
 	fmt.Printf("  %30s: %s %.3g%%\n", fmt.Sprintf("Layout penalty: %.0f", current), generateProgressBar(penaltyPercentage, 16), penaltyPercentage)
-	if debug > 0 {
+	if optDebug > 0 {
 		fmt.Println()
 		for _, r := range results {
 			percentOfHighest := r.Total / r.WatermarkPenalty * 100.0

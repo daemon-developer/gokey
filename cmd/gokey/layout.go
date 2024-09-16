@@ -346,8 +346,10 @@ func (layout *Layout) GetSwappableKeys() []*Key {
 
 func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map[rune]int, map[rune]int) {
 	orderedFoundRunes := sortMapByValueDescToArray(foundRunes)
-	for _, r := range orderedFoundRunes {
-		fmt.Printf("Rune '%c' used %d times\n", RuneDisplayVersion(r), foundRunes[r])
+	if optDebug > 1 {
+		for _, r := range orderedFoundRunes {
+			fmt.Printf("Rune '%c' used %d times\n", RuneDisplayVersion(r), foundRunes[r])
+		}
 	}
 	orderedKeyInfos := layout.getOrderedKeysByCost()
 
@@ -390,14 +392,18 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 		if unicode.IsLetter(runeToAssign) {
 			if !keyInfo.key.UnshiftedIsFree {
 				k++
-				fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
+				if optDebug > 1 {
+					fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
+				}
 				continue
 			}
 			lowerAlpha := unicode.ToLower(runeToAssign)
 			if !alreadyAssigned[lowerAlpha] {
 				// If it's a letter, assign lower and upper case
 				upperAlpha := unicode.ToUpper(runeToAssign)
-				fmt.Printf("Handling '%c' & '%c' as letter\n", upperAlpha, lowerAlpha)
+				if optDebug > 1 {
+					fmt.Printf("Handling '%c' & '%c' as letter\n", upperAlpha, lowerAlpha)
+				}
 				keyInfo.key.UnshiftedRune = lowerAlpha
 				keyInfo.key.ShiftedRune = upperAlpha
 				keyInfo.key.UnshiftedIsFree = false
@@ -425,12 +431,16 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 			} else {
 				if !keyInfo.key.UnshiftedIsFree {
 					k++
-					fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
+					if optDebug > 1 {
+						fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
+					}
 					continue
 				}
 				// Use locale-based symbol mapping if overrides aren't supported
 				if shiftedRune, exists := user.Locale.unshiftedToShifted[runeToAssign]; exists {
-					fmt.Printf("Handling '%c' & '%c' as unshifted symbol\n", runeToAssign, shiftedRune)
+					if optDebug > 1 {
+						fmt.Printf("Handling '%c' & '%c' as unshifted symbol\n", runeToAssign, shiftedRune)
+					}
 					keyInfo.key.UnshiftedRune = runeToAssign
 					keyInfo.key.ShiftedRune = shiftedRune
 					keyInfo.key.UnshiftedIsFree = false
@@ -441,7 +451,9 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 					assignedRunes[shiftedRune] = foundRunes[shiftedRune]
 					assignedShiftedRunes[shiftedRune] = foundRunes[shiftedRune]
 				} else if unshiftedRune, exists := user.Locale.shiftedToUnshifted[runeToAssign]; exists {
-					fmt.Printf("Handling '%c' & '%c' as shifted symbol\n", runeToAssign, unshiftedRune)
+					if optDebug > 1 {
+						fmt.Printf("Handling '%c' & '%c' as shifted symbol\n", runeToAssign, unshiftedRune)
+					}
 					keyInfo.key.UnshiftedRune = unshiftedRune
 					keyInfo.key.ShiftedRune = runeToAssign
 					keyInfo.key.UnshiftedIsFree = false
@@ -453,7 +465,9 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 					assignedShiftedRunes[runeToAssign] = foundRunes[runeToAssign]
 				} else {
 					// Not actually symbols so will be things like ENTER or backspace
-					fmt.Printf("Handling '%c' as non-symbol\n", RuneDisplayVersion(runeToAssign))
+					if optDebug > 1 {
+						fmt.Printf("Handling '%c' as non-symbol\n", RuneDisplayVersion(runeToAssign))
+					}
 					keyInfo.key.UnshiftedRune = runeToAssign
 					keyInfo.key.ShiftedRune = runeToAssign
 					keyInfo.key.UnshiftedIsFree = false
@@ -470,8 +484,10 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 		}
 	}
 
-	for r, v := range assignedRunes {
-		fmt.Printf("Assigned rune '%c' to a key (rune was used %d times)\n", RuneDisplayVersion(r), v)
+	if optDebug > 1 {
+		for r, v := range assignedRunes {
+			fmt.Printf("Assigned rune '%c' to a key (rune was used %d times)\n", RuneDisplayVersion(r), v)
+		}
 	}
 
 	fmt.Println(layout.String())
@@ -563,60 +579,3 @@ func (layout *Layout) String() string {
 func (layout *Layout) StringWithCosts() string {
 	return layout.stringInternal(true)
 }
-
-/*
-func (layout *Layout) stringInternal(costs bool) string {
-	var sb strings.Builder
-
-	// Write the layout name
-	sb.WriteString(fmt.Sprintf("Layout: %s\n\n", layout.Name))
-
-	// Determine the maximum number of rows
-	maxRows := len(layout.Left.Rows)
-	if len(layout.Right.Rows) > maxRows {
-		maxRows = len(layout.Right.Rows)
-	}
-
-	// Generate the layout visualization
-	for i := 0; i < maxRows; i++ {
-		leftRow := ""
-		rightRow := ""
-
-		if i < len(layout.Left.Rows) {
-			leftRow += visualizeRow(layout.Left.Rows[i], costs)
-		}
-		if i < len(layout.Right.Rows) {
-			rightRow += visualizeRow(layout.Right.Rows[i], costs)
-		}
-
-		if !costs {
-			sb.WriteString(fmt.Sprintf("%25s  |  %s\n", leftRow, rightRow))
-		} else {
-			sb.WriteString(fmt.Sprintf("%42s  |  %s\n", leftRow, rightRow))
-		}
-	}
-
-	return sb.String()
-}
-
-func visualizeRow(row []KeyPhysicalInfo, costs bool) string {
-	var keys []string
-
-	if !costs {
-		for _, keyInfo := range row {
-			if keyInfo.key.UnshiftedRune != 0 {
-				displayRune := RuneDisplayVersion(unicode.ToUpper(keyInfo.key.UnshiftedRune))
-				keys = append(keys, fmt.Sprintf("[%c]", displayRune))
-			} else {
-				keys = append(keys, fmt.Sprintf("[%c]", ' '))
-			}
-		}
-	} else {
-		for _, keyInfo := range row {
-			keys = append(keys, fmt.Sprintf("[%1.2f]", keyInfo.cost))
-		}
-	}
-
-	return strings.Join(keys, " ")
-}
-*/

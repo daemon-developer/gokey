@@ -50,10 +50,12 @@ func run(cmd *cobra.Command, args []string) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("%d runes on keyboard\n", len(quartadInfo.RunesOnKeyboard))
-	fmt.Printf("%d quartads\n", len(quartadInfo.Quartads))
+	if optDebug > 1 {
+		fmt.Printf("%d runes on keyboard\n", len(quartadInfo.RunesOnKeyboard))
+		fmt.Printf("%d quartads\n", len(quartadInfo.Quartads))
+	}
 
 	fmt.Println(user.Layout.StringWithCosts())
 
-	Optimize(quartadInfo, user.Layout, user, optDebug, optIterations, 1, optSwaps)
+	Optimize(quartadInfo, user.Layout, user, optIterations, 1, optSwaps)
 }
