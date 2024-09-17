@@ -3,12 +3,10 @@
   "keyboard": "zsa-voyager",
   "corpus": [
     "corpus/aliceinwonderland.txt",
-    "corpus/golang.txt",
-    "corpus/down_and_out_in_the_magic_kingdom.txt",
-    "corpus/rust.txt"
+    "corpus/down_and_out_in_the_magic_kingdom.txt"
   ],
   "locale": "iso-uk-mac",
-  "required": "^abcedfghijklmnopqrstuvwxyz \n\t",
+  "required": "^abcedfghijklmnopqrstuvwxyz []\n\t\\",
   "left": {
     "thumb": { "cost": 0.0, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.1 },
     "index": { "cost": 0.0, "up_cost": 1.5, "down_cost": 1.0, "h_cost": 2.5 },

@@ -14,15 +14,44 @@ type SimulatedAnnealing struct {
 	KN float64
 }
 
-// NewSimulatedAnnealing creates a new SimulatedAnnealing instance with default parameters
+// NewSimulatedAnnealing initializes a simulated annealing optimizer
+// for keyboard layout optimization.
+//
+// The annealing process starts with high exploration (accepting many suboptimal moves)
+// and gradually transitions to exploitation (refining the best solutions found).
+//
+// Adjust T0, K, and N to control the balance between exploration and exploitation.
+// Higher T0 and lower K/N ratio favor exploration, while lower T0 and higher K/N
+// ratio favor exploitation.
+//
+// It's often beneficial to run multiple annealing processes with different
+// parameter sets to find the best results for your specific problem.
 func NewSimulatedAnnealing(iterations int) *SimulatedAnnealing {
 	sa := &SimulatedAnnealing{
-		T0: 10.0,                        //1.5,
-		K:  float64(iterations) / 10000, //10.0,
+		// Initial temperature: controls initial acceptance probability of worse solutions
+		// Higher values (5-20) allow more exploration early on
+		// Lower values (1-5) focus more on exploitation from the start
+		T0: 10.0,
+
+		// Cooling rate: controls how quickly temperature decreases
+		// Higher values (20-100) cool faster, lower values (1-20) cool slower
+		// Should be adjusted proportionally with N to maintain cooling profile
+		K: 50.0,
+
+		// Probability scaling factor: typically left at 1.0
+		// Adjust only if you need to fine-tune acceptance probabilities
 		P0: 1.0,
-		N:  iterations,
+
+		// Number of iterations: total steps in the annealing process
+		// More iterations (100,000-1,000,000) allow for more thorough exploration
+		// Fewer iterations (10,000-100,000) for quicker, less thorough searches
+		N: iterations,
 	}
+
+	// Normalized cooling rate: used in temperature calculation
+	// This value should remain constant if K and N are scaled proportionally
 	sa.KN = sa.K / float64(sa.N)
+
 	return sa
 }
 
