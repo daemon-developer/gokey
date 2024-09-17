@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
+	"golang.org/x/text/message"
 	"math/rand"
 	"os"
 	"time"
@@ -10,6 +10,7 @@ import (
 
 var (
 	r             *rand.Rand
+	p             *message.Printer
 	optIterations int
 	optDebug      int
 	optSwaps      int
@@ -35,8 +36,11 @@ func main() {
 	source := rand.NewSource(time.Now().UnixNano())
 	r = rand.New(source)
 
+	// Get a printer
+	p = message.NewPrinter(message.MatchLanguage("en"))
+
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		p.Println(err)
 		os.Exit(1)
 	}
 }
@@ -53,15 +57,15 @@ func run(cmd *cobra.Command, args []string) {
 
 	quartadInfo, err := GetQuartadList(user.Corpus, user)
 	if err != nil {
-		fmt.Println(err)
+		p.Println(err)
 		return
 	}
 	if optDebug > 1 {
-		fmt.Printf("%d runes on keyboard\n", len(quartadInfo.RunesOnKeyboard))
-		fmt.Printf("%d quartads\n", len(quartadInfo.Quartads))
+		p.Printf("%d runes on keyboard\n", len(quartadInfo.RunesOnKeyboard))
+		p.Printf("%d quartads\n", len(quartadInfo.Quartads))
 	}
 
-	fmt.Println(user.Layout.StringWithCosts())
+	p.Println(user.Layout.StringWithCosts())
 
 	Optimize(quartadInfo, user.Layout, user, optIterations, optSwaps)
 }

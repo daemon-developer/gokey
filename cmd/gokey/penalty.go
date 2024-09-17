@@ -38,6 +38,7 @@ func InitPenaltyRules(user User) []KeyPenalty {
 		{Name: "Same finger modifier", Function: calcSameFingerModifierPenalty, Cost: user.Penalties.SameFingerModifier},
 		{Name: "Diagonal modifier", Function: calcDiagonalModifierPenalty, Cost: user.Penalties.DiagonalModifier},
 		{Name: "Modifier stretch", Function: calcModifierStretchPenalty, Cost: user.Penalties.ModifierStretch},
+		{Name: "Double tap thumbs", Function: calcDoubleTapThumbsPenalty, Cost: user.Penalties.DoubleTapThumbs},
 	}
 }
 
@@ -274,6 +275,18 @@ func calcModifierStretchPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod
 				(modCurr.horzDeltaToHome != 0 || modCurr.vertDeltaToHome != 0) {
 				return cost
 			}
+		}
+	}
+	return 0.0
+}
+
+func calcDoubleTapThumbsPenalty(curr, old1, old2, old3, modCurr, mod1, mod2, mod3 *KeyPhysicalInfo, cost float64) float64 {
+	if curr == nil || old1 == nil {
+		return 0.0
+	}
+	if curr.hand == old1.hand {
+		if curr.associatedFinger == Thumb && old1.associatedFinger == Thumb {
+			return cost
 		}
 	}
 	return 0.0

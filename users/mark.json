@@ -36,8 +36,9 @@
     "row_change_in_roll": 10.0,
     "same_finger_modifier": 50.0,
     "diagonal_modifier": 8.0,
-    "modifier_stretch": 10.0
+    "modifier_stretch": 10.0,
+    "double_tap_thumbs": 5.0
   },
   "backspace_usage": 3.0,
-  "starting_penalty_watermark": 200000000.0
+  "starting_penalty_watermark": 20000000.0
 }

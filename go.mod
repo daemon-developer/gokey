@@ -6,6 +6,7 @@ require (
 	atomicgo.dev/cursor v0.2.0
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/spf13/cobra v1.8.1
+	golang.org/x/text v0.18.0
 )
 
 require (

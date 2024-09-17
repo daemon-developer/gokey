@@ -50,6 +50,7 @@ type User struct {
 		SameFingerModifier   float64 `json:"same_finger_modifier"`
 		DiagonalModifier     float64 `json:"diagonal_modifier"`
 		ModifierStretch      float64 `json:"modifier_stretch"`
+		DoubleTapThumbs      float64 `json:"double_tap_thumbs"`
 	} `json:"penalties"`
 }
 
@@ -70,7 +71,7 @@ func ReadUser(filename string) (User, error) {
 	// Get the required runes
 	profile.Required = make([]rune, 0)
 	for _, c := range profile.RawRequired {
-		r := runeFromString(fmt.Sprintf("%c", c))
+		r := runeFromString(p.Sprintf("%c", c))
 		profile.Required = append(profile.Required, r)
 	}
 

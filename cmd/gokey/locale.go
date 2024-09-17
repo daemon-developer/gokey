@@ -12,7 +12,7 @@ type Locale struct {
 }
 
 func LoadUserLocale(locateFile string) (Locale, error) {
-	filename := fmt.Sprintf("locale/%s.json", locateFile)
+	filename := p.Sprintf("locale/%s.json", locateFile)
 
 	// Read the file
 	data, err := os.ReadFile(filename)

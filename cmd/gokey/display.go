@@ -88,7 +88,7 @@ func (layout *Layout) stringInternal(costs bool) string {
 	// Write the layout name
 	// Write the layout name separately
 	layoutNameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(blue))
-	layoutName := layoutNameStyle.Render(fmt.Sprintf("Layout: %s", layout.Name))
+	layoutName := layoutNameStyle.Render(p.Sprintf("Layout: %s", layout.Name))
 	sb.WriteString(layoutName + "\n\n")
 
 	// Determine the maximum number of rows
@@ -119,7 +119,7 @@ func (layout *Layout) stringInternal(costs bool) string {
 		leftAligned := lipgloss.NewStyle().Width(leftWidth).Align(lipgloss.Right).Render(leftRow)
 		rightAligned := lipgloss.NewStyle().Render(rightRow)
 
-		sb.WriteString(fmt.Sprintf("%s  |  %s\n", leftAligned, rightAligned))
+		sb.WriteString(p.Sprintf("%s  |  %s\n", leftAligned, rightAligned))
 	}
 
 	return sb.String()
@@ -165,7 +165,7 @@ func formatCost(cost float64) string {
 	// Create a heat map color based on the cost (0-10 scale)
 	heatColor := lipgloss.Color(blendColors(green, red, cost/10))
 	costStyle := lipgloss.NewStyle().Foreground(heatColor)
-	return bracketStyle.Render("[") + costStyle.Render(fmt.Sprintf("%1.2f", cost)) + bracketStyle.Render("]")
+	return bracketStyle.Render("[") + costStyle.Render(p.Sprintf("%1.2f", cost)) + bracketStyle.Render("]")
 }
 
 func blendColors(startColor, endColor string, ratio float64) string {
@@ -179,7 +179,7 @@ func blendColors(startColor, endColor string, ratio float64) string {
 		int(float64(start[2])*(1-ratio) + float64(end[2])*ratio),
 	}
 
-	return fmt.Sprintf("#%02x%02x%02x", blended[0], blended[1], blended[2])
+	return p.Sprintf("#%02x%02x%02x", blended[0], blended[1], blended[2])
 }
 
 func parseHexColor(hex string) [3]int {

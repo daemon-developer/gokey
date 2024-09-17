@@ -64,7 +64,7 @@ type HomePosition struct {
 }
 
 func ReadLayout(user User) (Layout, error) {
-	filename := fmt.Sprintf("keyboards/%s.json", user.Keyboard)
+	filename := p.Sprintf("keyboards/%s.json", user.Keyboard)
 
 	var layout Layout
 	data, err := os.ReadFile(filename)
@@ -370,7 +370,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 
 	if optDebug > 1 {
 		for _, r := range foundRunesToPlace {
-			fmt.Printf("Rune '%c' used %d times\n", RuneDisplayVersion(r), foundRunes[r])
+			p.Printf("Rune '%c' used %d times\n", RuneDisplayVersion(r), foundRunes[r])
 		}
 	}
 	orderedKeyInfos := layout.getOrderedKeysByCost()
@@ -398,7 +398,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 	for i < len(foundRunesToPlace) && k < len(orderedKeyInfos) {
 		keyInfo := orderedKeyInfos[k]
 		if i >= len(foundRunesToPlace) {
-			fmt.Println("Breaking loop as out of ordered runes")
+			p.Println("Breaking loop as out of ordered runes")
 			break
 		}
 
@@ -415,7 +415,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 			if !keyInfo.key.UnshiftedIsFree {
 				k++
 				if optDebug > 1 {
-					fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
+					p.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
 				}
 				continue
 			}
@@ -424,7 +424,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 				// If it's a letter, assign lower and upper case
 				upperAlpha := unicode.ToUpper(runeToAssign)
 				if optDebug > 1 {
-					fmt.Printf("Handling '%c' & '%c' as letter\n", upperAlpha, lowerAlpha)
+					p.Printf("Handling '%c' & '%c' as letter\n", upperAlpha, lowerAlpha)
 				}
 				keyInfo.key.UnshiftedRune = lowerAlpha
 				keyInfo.key.ShiftedRune = upperAlpha
@@ -454,14 +454,14 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 				if !keyInfo.key.UnshiftedIsFree {
 					k++
 					if optDebug > 1 {
-						fmt.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
+						p.Printf("Skipping key %d,%d which has rune '%c' already\n", keyInfo.row, keyInfo.col, RuneDisplayVersion(keyInfo.key.UnshiftedRune))
 					}
 					continue
 				}
 				// Use locale-based symbol mapping if overrides aren't supported
 				if shiftedRune, exists := user.Locale.unshiftedToShifted[runeToAssign]; exists {
 					if optDebug > 1 {
-						fmt.Printf("Handling '%c' & '%c' as unshifted symbol\n", runeToAssign, shiftedRune)
+						p.Printf("Handling '%c' & '%c' as unshifted symbol\n", runeToAssign, shiftedRune)
 					}
 					keyInfo.key.UnshiftedRune = runeToAssign
 					keyInfo.key.ShiftedRune = shiftedRune
@@ -474,7 +474,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 					assignedShiftedRunes[shiftedRune] = foundRunes[shiftedRune]
 				} else if unshiftedRune, exists := user.Locale.shiftedToUnshifted[runeToAssign]; exists {
 					if optDebug > 1 {
-						fmt.Printf("Handling '%c' & '%c' as shifted symbol\n", runeToAssign, unshiftedRune)
+						p.Printf("Handling '%c' & '%c' as shifted symbol\n", runeToAssign, unshiftedRune)
 					}
 					keyInfo.key.UnshiftedRune = unshiftedRune
 					keyInfo.key.ShiftedRune = runeToAssign
@@ -488,7 +488,7 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 				} else {
 					// Not actually symbols so will be things like ENTER or backspace
 					if optDebug > 1 {
-						fmt.Printf("Handling '%c' as non-symbol\n", RuneDisplayVersion(runeToAssign))
+						p.Printf("Handling '%c' as non-symbol\n", RuneDisplayVersion(runeToAssign))
 					}
 					keyInfo.key.UnshiftedRune = runeToAssign
 					keyInfo.key.ShiftedRune = runeToAssign
@@ -508,11 +508,11 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 
 	if optDebug > 1 {
 		for r, v := range assignedRunes {
-			fmt.Printf("Assigned rune '%c' to a key (rune was used %d times)\n", RuneDisplayVersion(r), v)
+			p.Printf("Assigned rune '%c' to a key (rune was used %d times)\n", RuneDisplayVersion(r), v)
 		}
 	}
 
-	fmt.Println(layout.String())
+	p.Println(layout.String())
 
 	// Return the runes we have assigned to keys
 	return assignedRunes, assignedShiftedRunes
