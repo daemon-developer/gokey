@@ -25,3 +25,4 @@ It's important to consider the relative sizes of your corpora, as they directly 
 ### References
 
 [1] https://github.com/xsznix/keygen
+[2] https://cyanophage.github.io/

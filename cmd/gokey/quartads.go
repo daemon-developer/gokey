@@ -64,6 +64,11 @@ func PrepareQuartadList(s string, user User) QuartadInfo {
 		}
 	}
 
+	// If the user has asked for backspace, add it to the list of runes
+	if user.BackspaceUsage > 0 {
+		foundRunes['\b'] = 0
+	}
+
 	// The essential from the layout are essential meet the needs of hardcoded
 	// keys on that layout. We now also need to add any the user has asked for
 	reqRunes := user.Required
@@ -115,12 +120,18 @@ func PrepareQuartadList(s string, user User) QuartadInfo {
 		}
 	}
 
+	// Count all the runes being used on the keyboard as algorithms will need this later. Also count how many keypresses we have
 	runesOnKeyboardResult := make([]rune, len(runesOnKeyboard))
+	keypresses := 0
 	i := 0
 	for _, r := range runesOnKeyboard {
 		runesOnKeyboardResult[i] = rune(r)
+		keypresses += foundRunes[rune(r)]
 		i++
 	}
+
+	// Add quartad for backspace usage
+	quartads[MakeQuartad("\b", shiftedRunesOnKeyboard)] = int(float64(keypresses) * user.BackspaceUsage / 100.0)
 
 	return QuartadInfo{quartads, runesOnKeyboardResult}
 }

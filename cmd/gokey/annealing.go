@@ -2,7 +2,6 @@ package main
 
 import (
 	"math"
-	"math/rand"
 )
 
 // SimulatedAnnealing represents the simulated annealing optimizer
@@ -31,12 +30,12 @@ func NewSimulatedAnnealing(iterations int) *SimulatedAnnealing {
 		// Initial temperature: controls initial acceptance probability of worse solutions
 		// Higher values (5-20) allow more exploration early on
 		// Lower values (1-5) focus more on exploitation from the start
-		T0: 10.0,
+		T0: 5.0,
 
 		// Cooling rate: controls how quickly temperature decreases
 		// Higher values (20-100) cool faster, lower values (1-20) cool slower
 		// Should be adjusted proportionally with N to maintain cooling profile
-		K: 50.0,
+		K: float64(iterations) / 1500.0,
 
 		// Probability scaling factor: typically left at 1.0
 		// Adjust only if you need to fine-tune acceptance probabilities
@@ -72,7 +71,7 @@ func (sa *SimulatedAnnealing) AcceptTransition(de float64, i int) bool {
 		return true
 	}
 	pDe := sa.CutoffP(de, i)
-	r := rand.Float64()
+	r := r.Float64()
 	return r < pDe
 }
 

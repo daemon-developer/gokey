@@ -55,6 +55,11 @@ func generateProgressBar(percent float64, length int) string {
 	}
 
 	filled := int(float64(length) * percent / 100)
+	if filled < 0 {
+		filled = 0
+	} else if filled > length {
+		filled = length
+	}
 	partial := int((float64(length)*percent/100)*8) % 8
 
 	var bar strings.Builder

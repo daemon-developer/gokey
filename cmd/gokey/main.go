@@ -2,16 +2,18 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"runtime"
-
 	"github.com/spf13/cobra"
+	"math/rand"
+	"os"
+	"time"
 )
 
 var (
+	r             *rand.Rand
 	optIterations int
 	optDebug      int
 	optSwaps      int
+	optLayout     string
 	rootCmd       = &cobra.Command{
 		Use:   "gokey [username]",
 		Short: "Generate a personalized keyboard layout.",
@@ -24,11 +26,15 @@ var (
 func init() {
 	rootCmd.Flags().IntVarP(&optIterations, "iterations", "i", 10000, "Number of iterations")
 	rootCmd.Flags().IntVarP(&optSwaps, "swaps", "s", 3, "Number key swaps per iteration")
+	rootCmd.Flags().StringVarP(&optLayout, "layout", "l", "", "Override layout name")
 	rootCmd.Flags().IntVarP(&optDebug, "debug", "d", 0, "Debug level (0-2)")
 }
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	// Seed the random number generator
+	source := rand.NewSource(time.Now().UnixNano())
+	r = rand.New(source)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

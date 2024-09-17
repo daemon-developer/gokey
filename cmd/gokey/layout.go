@@ -196,9 +196,29 @@ func (layout *Layout) parseKeyString(s *Side, r, c int, keyStr string, essential
 			key.ShiftedIsFree = false
 		} else {
 			// Other symbols or fixed assignments
-			key.UnshiftedRune = runeFromString(keyContent)
-			key.UnshiftedIsFree = false
-			key.ShiftedIsFree = true // Assuming shifted layer is free
+			if !supportOverrides {
+				unshiftedRune := runeFromString(keyContent)
+				// Check we were given the unshifted rune and not the shifted one
+				if _, ok := locale.unshiftedToShifted[unshiftedRune]; !ok {
+					if r, ok := locale.shiftedToUnshifted[unshiftedRune]; ok {
+						unshiftedRune = r
+					}
+				}
+				shiftedRune := locale.unshiftedToShifted[unshiftedRune]
+				key.UnshiftedRune = unshiftedRune
+				(*essentialRunes)[key.UnshiftedRune] = true
+				key.UnshiftedIsFree = false
+				if shiftedRune != 0 {
+					key.ShiftedRune = shiftedRune
+					(*essentialRunes)[key.ShiftedRune] = true
+					key.ShiftedIsFree = false
+				}
+			} else {
+				key.UnshiftedRune = runeFromString(keyContent)
+				(*essentialRunes)[key.UnshiftedRune] = true
+				key.UnshiftedIsFree = false
+				key.ShiftedIsFree = true // Assuming shifted layer is free
+			}
 		}
 	}
 
@@ -345,9 +365,11 @@ func (layout *Layout) GetSwappableKeys() []*Key {
 }
 
 func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map[rune]int, map[rune]int) {
-	orderedFoundRunes := sortMapByValueDescToArray(foundRunes)
+	//foundRunesToPlace := sortMapByValueDescToArray(foundRunes)
+	foundRunesToPlace := randomizeMapToArray(foundRunes)
+
 	if optDebug > 1 {
-		for _, r := range orderedFoundRunes {
+		for _, r := range foundRunesToPlace {
 			fmt.Printf("Rune '%c' used %d times\n", RuneDisplayVersion(r), foundRunes[r])
 		}
 	}
@@ -373,15 +395,15 @@ func (layout *Layout) AssignRunesToKeys(foundRunes map[rune]int, user User) (map
 
 	i := 0
 	k := 0
-	for i < len(orderedFoundRunes) && k < len(orderedKeyInfos) {
+	for i < len(foundRunesToPlace) && k < len(orderedKeyInfos) {
 		keyInfo := orderedKeyInfos[k]
-		if i >= len(orderedFoundRunes) {
+		if i >= len(foundRunesToPlace) {
 			fmt.Println("Breaking loop as out of ordered runes")
 			break
 		}
 
 		// Get the rune to assign
-		runeToAssign := orderedFoundRunes[i]
+		runeToAssign := foundRunesToPlace[i]
 
 		// Check if it's already assigned
 		if alreadyAssigned[runeToAssign] {

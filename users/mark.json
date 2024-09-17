@@ -3,39 +3,41 @@
   "keyboard": "zsa-voyager",
   "corpus": [
     "corpus/aliceinwonderland.txt",
-    "corpus/down_and_out_in_the_magic_kingdom.txt"
+    "corpus/golang.txt"
   ],
   "locale": "iso-uk-mac",
   "required": "^abcedfghijklmnopqrstuvwxyz []\n\t\\",
   "left": {
-    "thumb": { "cost": 0.0, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.1 },
-    "index": { "cost": 0.0, "up_cost": 1.5, "down_cost": 1.0, "h_cost": 2.5 },
-    "middle": { "cost": 0.05, "up_cost": 1.0, "down_cost": 1.5, "h_cost": 0.0 },
-    "ring": { "cost": 0.3, "up_cost": 1.25, "down_cost": 1.75, "h_cost": 0.0 },
-    "pinkie": { "cost": 0.8, "up_cost": 1.5, "down_cost": 2.0, "h_cost": 3.0 }
+    "thumb": { "cost": 0.25, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.0 },
+    "index": { "cost": 0.0, "up_cost": 1.25, "down_cost": 1.5, "h_cost": 1.0 },
+    "middle": { "cost": 0.0, "up_cost": 1.25, "down_cost": 1.5, "h_cost": 0.0 },
+    "ring": { "cost": 0.25, "up_cost": 1.5, "down_cost": 1.5, "h_cost": 0.0 },
+    "pinkie": { "cost": 0.25, "up_cost": 1.75, "down_cost": 1.5, "h_cost": 2.25 }
   },
   "right": {
-    "thumb": { "cost": 0.0, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.1 },
-    "index": { "cost": 0.0, "up_cost": 1.5, "down_cost": 1.0, "h_cost": 2.5 },
-    "middle": { "cost": 0.05, "up_cost": 1.0, "down_cost": 1.5, "h_cost": 0.0 },
-    "ring": { "cost": 0.25, "up_cost": 1.25, "down_cost": 1.75, "h_cost": 0.0 },
-    "pinkie": { "cost": 0.75, "up_cost": 1.5, "down_cost": 2.0, "h_cost": 3.0 }
+    "thumb": { "cost": 0.25, "up_cost": 0.0, "down_cost": 0.0, "h_cost": 1.0 },
+    "index": { "cost": 0.0, "up_cost": 1.25, "down_cost": 1.5, "h_cost": 1.0 },
+    "middle": { "cost": 0.0, "up_cost": 1.25, "down_cost": 1.5, "h_cost": 0.0 },
+    "ring": { "cost": 0.25, "up_cost": 1.5, "down_cost": 1.5, "h_cost": 0.0 },
+    "pinkie": { "cost": 0.25, "up_cost": 1.75, "down_cost": 1.5, "h_cost": 2.25 }
   },
   "penalties": {
     "sfb": 5.0,
-    "vertical_finger_travel": 5.0,
-    "long_sfb": 8.0,
-    "lateral_stretch": 7.0,
-    "pinky_ring_stretch": 15.0,
-    "roll_reversal": 4.0,
-    "hand_repetition": 2.0,
-    "hand_alternation": -0.5,
-    "outward_roll": -0.5,
-    "inward_roll": -3.0,
-    "scissor_motion": 6.0,
-    "row_change_in_roll": 4.0,
-    "same_finger_modifier": 20.0,
+    "vertical_finger_travel": 1.0,
+    "long_sfb": 10.0,
+    "lateral_stretch": 5.0,
+    "pinky_ring_stretch": 10.0,
+    "roll_reversal": 20.0,
+    "hand_repetition": 0.5,
+    "hand_alternation": 0.5,
+    "outward_roll": -0.25,
+    "inward_roll": -1.5,
+    "scissor_motion": 3.0,
+    "row_change_in_roll": 10.0,
+    "same_finger_modifier": 50.0,
     "diagonal_modifier": 8.0,
     "modifier_stretch": 10.0
-  }
+  },
+  "backspace_usage": 3.0,
+  "starting_penalty_watermark": 200000000.0
 }

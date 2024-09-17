@@ -22,17 +22,19 @@ type Hand struct {
 }
 
 type User struct {
-	Name        string   `json:"name"`
-	Keyboard    string   `json:"keyboard"`
-	Corpus      []string `json:"corpus"`
-	RawLocale   string   `json:"locale"`
-	RawRequired string   `json:"required"`
-	Required    []rune
-	Locale      Locale
-	Layout      Layout
-	Left        Hand `json:"left"`
-	Right       Hand `json:"right"`
-	Penalties   struct {
+	Name                     string   `json:"name"`
+	Keyboard                 string   `json:"keyboard"`
+	Corpus                   []string `json:"corpus"`
+	RawLocale                string   `json:"locale"`
+	RawRequired              string   `json:"required"`
+	BackspaceUsage           float64  `json:"backspace_usage"`
+	StartingPenaltyWatermark float64  `json:"starting_penalty_watermark"`
+	Required                 []rune
+	Locale                   Locale
+	Layout                   Layout
+	Left                     Hand `json:"left"`
+	Right                    Hand `json:"right"`
+	Penalties                struct {
 		SFB                  float64 `json:"sfb"`
 		VerticalFingerTravel float64 `json:"vertical_finger_travel"`
 		LongSFB              float64 `json:"long_sfb"`
@@ -79,6 +81,9 @@ func ReadUser(filename string) (User, error) {
 	}
 
 	// Now read their layout
+	if len(optLayout) > 0 {
+		profile.Keyboard = optLayout
+	}
 	layout, err := ReadLayout(profile)
 	if err != nil {
 		return User{}, err
