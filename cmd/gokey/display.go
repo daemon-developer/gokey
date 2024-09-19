@@ -185,6 +185,10 @@ func blendColors(startColor, endColor string, ratio float64) string {
 func parseHexColor(hex string) [3]int {
 	hex = strings.TrimPrefix(hex, "#")
 	var rgb [3]int
-	fmt.Sscanf(hex, "%02x%02x%02x", &rgb[0], &rgb[1], &rgb[2])
+	n, _ := fmt.Sscanf(hex, "%02x%02x%02x", &rgb[0], &rgb[1], &rgb[2])
+	if n != 3 {
+		// If parsing fails, return magenta as an error color
+		return [3]int{255, 0, 255}
+	}
 	return rgb
 }

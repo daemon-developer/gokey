@@ -384,8 +384,8 @@ func penalize(quartad Quartad, count int, runesToKeyPhysicalKeyInfoMap map[rune]
 			if optDebug > 0 {
 				penalties[i].Total += cost
 				if optDebug > 2 {
+					penalties[i].HighKeys[quartad] += cost
 				}
-				penalties[i].HighKeys[quartad] += cost
 			}
 		}
 	}
